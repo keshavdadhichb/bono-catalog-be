@@ -94,13 +94,35 @@ class GeminiClient:
             raise ValueError("No parts found in response")
         
         for part in parts:
+            # Check for inline_data first
             if hasattr(part, 'inline_data') and part.inline_data is not None:
-                if hasattr(part, 'as_image'):
-                    pil_image = part.as_image()
-                    if pil_image:
-                        return self._pil_to_bytes(pil_image, format="PNG")
-                elif hasattr(part.inline_data, 'data'):
+                # Try to get raw bytes directly
+                if hasattr(part.inline_data, 'data'):
                     return part.inline_data.data
+            
+            # Try as_image() method
+            if hasattr(part, 'as_image'):
+                try:
+                    img = part.as_image()
+                    if img:
+                        # Check if it's a PIL Image
+                        if hasattr(img, 'save'):
+                            buffer = BytesIO()
+                            # Try without keyword args first (Google Image object)
+                            try:
+                                img.save(buffer, "PNG")
+                            except TypeError:
+                                # Fallback for PIL Image
+                                img.save(buffer, format="PNG")
+                            buffer.seek(0)
+                            return buffer.getvalue()
+                        # Check if it has image_bytes attribute
+                        elif hasattr(img, 'image_bytes'):
+                            return img.image_bytes
+                        elif hasattr(img, '_image_bytes'):
+                            return img._image_bytes
+                except Exception as e:
+                    print(f"Error extracting image: {e}")
             
             if hasattr(part, 'text') and part.text:
                 print(f"Got text part: {part.text[:200]}...")
