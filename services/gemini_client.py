@@ -256,7 +256,12 @@ STYLE_PRESETS = {
 
 
 class GeminiClient:
-    """Client for Gemini 3 Pro Image - Native 2K High Quality Photo Generation"""
+    """Client for Gemini Image Generation with fallback support"""
+    
+    # Primary model for 2K/4K generation
+    PRIMARY_MODEL = "gemini-3-pro-image-preview"
+    # Fallback model (works reliably)
+    FALLBACK_MODEL = "gemini-2.0-flash-exp"
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
@@ -264,7 +269,7 @@ class GeminiClient:
             raise ValueError("GOOGLE_API_KEY environment variable is required")
         
         self.client = genai.Client(api_key=self.api_key)
-        self.model = "gemini-3-pro-image-preview"
+        self.model = self.PRIMARY_MODEL
     
     def _image_to_pil(self, image_bytes: bytes) -> Image.Image:
         return Image.open(BytesIO(image_bytes))
@@ -417,20 +422,33 @@ Output: Single photorealistic image of the model wearing this exact garment."""
 
         garment_pil = self._image_to_pil(garment_image)
         
-        response = await asyncio.to_thread(
-            self.client.models.generate_content,
-            model=self.model,
-            contents=[prompt, garment_pil],
-            config=types.GenerateContentConfig(
-                response_modalities=["TEXT", "IMAGE"],
-                image_config=types.ImageConfig(
-                    aspect_ratio="3:4",
-                    image_size="2K"
+        # Try primary model first, fallback to simpler model if fails
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Attempting photo generation with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await asyncio.to_thread(
+                    self.client.models.generate_content,
+                    model=model_to_use,
+                    contents=[prompt, garment_pil],
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="3:4",
+                            image_size="2K" if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
                 )
-            )
-        )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:  # Last attempt
+                    raise
+                print("Retrying with fallback model...")
         
-        return self._extract_image_from_response(response)
+        raise ValueError("All models failed to generate image")
 
     # ============================================
     # MARKETING POSTER GENERATION
@@ -518,17 +536,30 @@ Text and logo will be overlaid in post-production for guaranteed accuracy."""
         contents = [prompt, garment_pil]
         # Note: Logo will be overlaid by overlay_service, not by AI
         
-        response = await asyncio.to_thread(
-            self.client.models.generate_content,
-            model=self.model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                response_modalities=["IMAGE"],
-                image_config=types.ImageConfig(
-                    aspect_ratio="9:16",
-                    image_size="2K"
+        # Try primary model first, fallback to simpler model if fails
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Attempting poster generation with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await asyncio.to_thread(
+                    self.client.models.generate_content,
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size="2K" if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
                 )
-            )
-        )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:  # Last attempt
+                    raise
+                print("Retrying with fallback model...")
         
-        return self._extract_image_from_response(response)
+        raise ValueError("All models failed to generate image")

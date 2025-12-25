@@ -195,17 +195,23 @@ async def process_generation_job(job_id: str):
                     style_preset=job.get("style_preset", "")
                 )
                 
-                # Apply overlay with PIL for perfect text/logo
-                job["status"] = JobStatus.overlaying
-                job["message"] = f"Applying text overlay to product {product_num}..."
-                
-                final_poster = overlay.apply_overlay(
-                    image_bytes=poster,
-                    logo_bytes=job["logo"],
-                    headline_text=job["headline_text"],
-                    sub_text=job["sub_text"],
-                    text_color=job.get("text_color", "white")
-                )
+                # Apply overlay with PIL for perfect text/logo (with fallback)
+                final_poster = poster  # Default to raw poster
+                if job["headline_text"] or job["sub_text"] or job["logo"]:
+                    job["status"] = JobStatus.overlaying
+                    job["message"] = f"Applying text overlay to product {product_num}..."
+                    
+                    try:
+                        final_poster = overlay.apply_overlay(
+                            image_bytes=poster,
+                            logo_bytes=job["logo"],
+                            headline_text=job["headline_text"],
+                            sub_text=job["sub_text"],
+                            text_color=job.get("text_color", "white")
+                        )
+                    except Exception as overlay_err:
+                        print(f"Overlay failed, using raw poster: {overlay_err}")
+                        final_poster = poster  # Fallback to raw poster
                 
                 job["generated_images"].append((f"product_{product_num}_poster.png", final_poster))
                 job["status"] = JobStatus.generating
