@@ -177,19 +177,18 @@ async def generate_and_download(
                 zf.writestr(filename, image_bytes)
         
         zip_buffer.seek(0)
-        zip_content = zip_buffer.getvalue()
-        print(f"ZIP size: {len(zip_content)} bytes")
+        print(f"ZIP size: {zip_buffer.getbuffer().nbytes} bytes")
         
         safe_brand = "".join(c for c in brand_name if c.isalnum() or c in ' -_').strip() or "output"
         mode_suffix = "posters" if is_poster_mode else "photos"
         
-        return Response(
-            content=zip_content,
+        # Use StreamingResponse for Vercel compatibility
+        from fastapi.responses import StreamingResponse
+        return StreamingResponse(
+            zip_buffer,
             media_type="application/zip",
             headers={
-                "Content-Disposition": f'attachment; filename="{safe_brand}_{mode_suffix}.zip"',
-                "Content-Type": "application/zip",
-                "Content-Length": str(len(zip_content))
+                "Content-Disposition": f'attachment; filename="{safe_brand}_{mode_suffix}.zip"'
             }
         )
         
@@ -209,6 +208,7 @@ async def health_check():
 async def test_zip():
     """Test endpoint to verify ZIP binary response works on Vercel"""
     from PIL import Image
+    from fastapi.responses import StreamingResponse
     
     # Create a test image
     img = Image.new('RGB', (200, 200), color='blue')
@@ -222,15 +222,13 @@ async def test_zip():
         zf.writestr('test_image.png', img_bytes)
     
     zip_buffer.seek(0)
-    zip_content = zip_buffer.getvalue()
     
-    return Response(
-        content=zip_content,
+    # Use StreamingResponse for better Vercel compatibility
+    return StreamingResponse(
+        zip_buffer,
         media_type="application/zip",
         headers={
-            "Content-Disposition": 'attachment; filename="test.zip"',
-            "Content-Type": "application/zip",
-            "Content-Length": str(len(zip_content))
+            "Content-Disposition": 'attachment; filename="test.zip"'
         }
     )
 
