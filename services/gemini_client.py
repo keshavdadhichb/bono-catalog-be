@@ -488,28 +488,38 @@ Output: Single photorealistic image of the model wearing this exact garment."""
         prompt = f"""You are a world-class Fashion Art Director and Commercial Photographer.
 Generate a STUNNING HIGH-RESOLUTION MARKETING POSTER / ADVERTISEMENT.
 
-=== CRITICAL GARMENT RULES ===
-⚠️ DO NOT modify the garment design in ANY way
-⚠️ The t-shirt/garment must appear EXACTLY as in the reference image
-⚠️ If the garment has a print/graphic, reproduce it EXACTLY
-⚠️ If the garment is PLAIN, keep it PLAIN - do NOT add anything
+=== ⛔ ZERO-TOLERANCE GARMENT RULES - READ CAREFULLY ⛔ ===
+🚫 ABSOLUTELY DO NOT ADD ANY TEXT, LOGOS, GRAPHICS OR PRINTS TO THE GARMENT
+🚫 The garment in the reference image is the ONLY source of truth
+🚫 If the reference garment is PLAIN/SOLID COLOR - the output garment MUST be PLAIN/SOLID
+🚫 DO NOT invent, add, or imagine any text like "SQUAD", "STYLE", or any words on the t-shirt
+🚫 DO NOT add any graphic, icon, emblem, or design element to the garment
+🚫 The ONLY acceptable modification is natural fabric draping and lighting
+🚫 VIOLATION OF THIS RULE RUINS THE ENTIRE OUTPUT
+
+If the t-shirt in the reference is plain cream/beige - it MUST remain plain cream/beige with ZERO additions.
 
 === LAYOUT STRUCTURE ===
 {layout_prompt}
 
-=== TYPOGRAPHY & TEXT ===
+=== TYPOGRAPHY & TEXT (POSTER TEXT ONLY - NOT ON GARMENT) ===
 {text_instructions}
 
-⚠️ CRITICAL TYPOGRAPHY RULES:
-1. ALL text MUST be OVERLAID directly on the image - NEVER in a separate white/colored section below
-2. Use premium fashion fonts: Montserrat, Playfair Display, Bebas Neue, Oswald
-3. Use gradient overlays or subtle shadows for text readability
-4. The entire poster must be ONE cohesive image with text seamlessly integrated
-5. NO separate text blocks or panels that look disconnected from the image
-6. Text can overlap with model - this is professional and editorial
-7. Headlines: Bold condensed fonts, high-impact
-8. Subtext: Light weight, elegant letter-spacing
-9. Create visual hierarchy with typography size and weight
+⚠️ TYPOGRAPHY STYLE REQUIREMENTS:
+1. ALL text MUST be OVERLAID directly on the image - NEVER in a separate section
+2. Use SUBTLE, MUTED, ELEGANT color palette for text:
+   - Soft whites, creams, warm grays
+   - Muted earth tones (taupe, soft brown, dusty rose)
+   - NO bright orange, NO neon, NO poppy colors
+   - Colors should HARMONIZE with the image, not scream for attention
+3. Use refined SERIF or thin SANS-SERIF fonts:
+   - Elegant: Cormorant Garamond, Libre Baskerville, Playfair Display
+   - Clean: Montserrat Light/Thin, Raleway, Jost
+   - NO chunky, NO bold condensed, NO Impact-style fonts
+4. Typography should feel LUXURIOUS and UNDERSTATED
+5. Text should WHISPER elegance, not SHOUT for attention
+6. Letter-spacing should be generous and refined
+7. Think: Vogue, Harpers Bazaar, minimalist luxury brands
 
 === THE MODEL ===
 Subject: {config['description']}, {config['age_range']}
@@ -581,15 +591,23 @@ Generate a complete professional marketing poster."""
     def _get_layout_prompt(self, layout_style: str) -> str:
         """Get detailed layout instructions for each style - ALL text overlaid on image"""
         
-        # Common premium typography guidance
+        # Common premium typography guidance - SUBTLE & ELEGANT
         typography_base = """
+🚫 GARMENT RULE: DO NOT ADD ANY TEXT/LOGOS TO THE GARMENT - Keep garment EXACTLY as reference
+
 TYPOGRAPHY REQUIREMENTS:
-⚠️ ALL TEXT MUST BE OVERLAID DIRECTLY ON THE IMAGE - NOT IN A SEPARATE WHITE/COLORED SECTION BELOW
-⚠️ Use premium fashion fonts: Montserrat, Playfair Display, Bebas Neue, Oswald, or similar
-⚠️ Text should have subtle drop shadows or gradient overlays for readability
-⚠️ The image must be ONE COHESIVE COMPOSITION with text integrated seamlessly
-⚠️ NEVER create a separate text block/section below or beside the image
-⚠️ Use letter-spacing and elegant typography hierarchy
+⚠️ ALL TEXT MUST BE OVERLAID ON THE IMAGE - NOT in a separate section below
+⚠️ Use SUBTLE, MUTED COLORS for text:
+   - Soft whites, creams, warm grays, off-whites
+   - Muted earth tones (taupe, soft brown, dusty rose, sage)
+   - NO bright orange, NO neon, NO poppy/saturated colors
+⚠️ Use ELEGANT, REFINED fonts:
+   - Serif: Cormorant Garamond, Playfair Display, Libre Baskerville
+   - Sans: Montserrat Light/Thin, Raleway, Jost
+   - NO chunky bold fonts, NO Impact-style fonts
+⚠️ Typography should WHISPER elegance, not SHOUT
+⚠️ The image must be ONE COHESIVE COMPOSITION
+⚠️ Think: Vogue, minimalist luxury aesthetic
 """
         
         layouts = {
