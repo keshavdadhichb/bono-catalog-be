@@ -500,11 +500,16 @@ Generate a STUNNING HIGH-RESOLUTION MARKETING POSTER / ADVERTISEMENT.
 === TYPOGRAPHY & TEXT ===
 {text_instructions}
 
-Typography Style:
-- Use clean, modern sans-serif fonts
-- Text must be PERFECTLY readable and spelled correctly
-- High contrast with background for visibility
-- Professional fashion magazine quality
+⚠️ CRITICAL TYPOGRAPHY RULES:
+1. ALL text MUST be OVERLAID directly on the image - NEVER in a separate white/colored section below
+2. Use premium fashion fonts: Montserrat, Playfair Display, Bebas Neue, Oswald
+3. Use gradient overlays or subtle shadows for text readability
+4. The entire poster must be ONE cohesive image with text seamlessly integrated
+5. NO separate text blocks or panels that look disconnected from the image
+6. Text can overlap with model - this is professional and editorial
+7. Headlines: Bold condensed fonts, high-impact
+8. Subtext: Light weight, elegant letter-spacing
+9. Create visual hierarchy with typography size and weight
 
 === THE MODEL ===
 Subject: {config['description']}, {config['age_range']}
@@ -574,106 +579,156 @@ Generate a complete professional marketing poster."""
         raise ValueError("All models failed")
     
     def _get_layout_prompt(self, layout_style: str) -> str:
-        """Get detailed layout instructions for each style"""
+        """Get detailed layout instructions for each style - ALL text overlaid on image"""
+        
+        # Common premium typography guidance
+        typography_base = """
+TYPOGRAPHY REQUIREMENTS:
+⚠️ ALL TEXT MUST BE OVERLAID DIRECTLY ON THE IMAGE - NOT IN A SEPARATE WHITE/COLORED SECTION BELOW
+⚠️ Use premium fashion fonts: Montserrat, Playfair Display, Bebas Neue, Oswald, or similar
+⚠️ Text should have subtle drop shadows or gradient overlays for readability
+⚠️ The image must be ONE COHESIVE COMPOSITION with text integrated seamlessly
+⚠️ NEVER create a separate text block/section below or beside the image
+⚠️ Use letter-spacing and elegant typography hierarchy
+"""
         
         layouts = {
-            "hero_bottom": """
+            "hero_bottom": f"""
+{typography_base}
+
 HERO BOTTOM LAYOUT:
-- Model takes up 70% of the image (top portion)
-- Large, bold headline text at the bottom 30%
-- Subtitle below the headline
-- Text should be centered horizontally
-- Use dramatic negative space around text
+- Full-bleed image - model fills the ENTIRE canvas
+- Text OVERLAID at the bottom 30% of the image
+- Use a subtle dark gradient overlay (from transparent to semi-dark) at the bottom for text readability
+- Headline: Large, bold, ALL CAPS (Montserrat Black or Bebas Neue style)
+- Subtext: Lighter weight, elegant spacing
+- The model's body continues BEHIND the text overlay
+- NO white/colored box - gradient fades into the image
 """,
-            "split_vertical": """
+            "split_vertical": f"""
+{typography_base}
+
 SPLIT VERTICAL LAYOUT:
-- Image divided 50/50 vertically
-- Left side: Model with garment
-- Right side: Clean color panel with text
-- Text panel has headline, subtext, and any pricing
-- Text is left-aligned on the panel
+- Full-bleed image with model on LEFT side
+- RIGHT side: Semi-transparent color overlay (60-80% opacity) with text
+- Text panel should NOT be a solid block - the image should subtly show through
+- Use glassmorphic effect if possible
+- Text aligned left on the overlay panel
+- Typography: Headlines in Playfair Display or similar serif, subtext in Montserrat
+- The background continues behind both sides - ONE unified image
 """,
-            "magazine_cover": """
+            "magazine_cover": f"""
+{typography_base}
+
 MAGAZINE COVER LAYOUT:
-- Brand name/logo at very top (masthead style)
-- Model in center, full presence
-- Headline text overlaid on lower portion
-- Subtext below headline
-- Classic fashion magazine aesthetic
+- Full-bleed image - model covers the entire canvas
+- Brand/masthead OVERLAID at very top (elegant, condensed font)
+- Headline text OVERLAID on lower-left or center, WITH the model behind it
+- Use subtle shadows or glows for text legibility
+- Classic Vogue/GQ magazine aesthetic
+- Text can overlap with model where appropriate
+- Typography: Mix of serif (headlines) and sans-serif (subtext)
 """,
-            "minimal_corner": """
+            "minimal_corner": f"""
+{typography_base}
+
 MINIMAL CORNER LAYOUT:
-- Model dominates 95% of the image
-- Only small brand text in one corner
-- Tagline if provided, very subtle
-- Clean, minimal, gallery-style aesthetic
-- Maximum focus on the garment
+- Full-bleed image - model dominates 95% of the composition
+- Only small brand text OVERLAID in one corner (top-left or bottom-right)
+- Text should be subtle but legible (white with slight shadow)
+- Maximum focus on garment and model
+- Tagline if provided - very subtle, beneath brand
+- Typography: Clean, refined sans-serif (Montserrat Light or similar)
 """,
-            "overlay_gradient": """
+            "overlay_gradient": f"""
+{typography_base}
+
 OVERLAY GRADIENT LAYOUT:
-- Full-bleed image of model
-- Dark gradient overlay from bottom
-- Text appears over the gradient
-- Headline large and bold
-- CTA button-style text if provided
+- Full-bleed image of model - NO separate sections
+- Dramatic dark gradient overlay from bottom (fades from 70% opacity black to transparent)
+- All text appears OVER the gradient, in the lower portion
+- Headline: Large, bold, striking (Bebas Neue or Montserrat ExtraBold)
+- CTA styled like a soft button overlay if provided
+- Model visible through the gradient - moody, editorial feel
 """,
-            "framed_border": """
+            "framed_border": f"""
+{typography_base}
+
 FRAMED BORDER LAYOUT:
-- Image has clean white border/frame
-- Model inside the frame
-- Text BELOW the frame
-- Headline and subtext centered below image
-- Elegant, gallery-poster style
+- Full-bleed image with thin elegant border/frame OVERLAID on it
+- Model is visible edge-to-edge, with decorative border as an overlay
+- Text OVERLAID at bottom WITHIN the frame, on top of the image
+- Elegant, gallery-exhibition style
+- Typography: Refined serif fonts (Playfair Display) for headlines
+- Subtle gradient under text for readability
 """,
-            "bold_typography": """
+            "bold_typography": f"""
+{typography_base}
+
 BOLD TYPOGRAPHY LAYOUT:
-- 60% of image is large, impactful text
-- 40% shows the model
-- Text dominates the composition
-- Model can be partially visible
-- High-impact, editorial style
+- Full-bleed image with model
+- MASSIVE headline text OVERLAID across the image (can span 60% of composition)
+- Text should be semi-transparent or have creative opacity effects
+- Model visible THROUGH or AROUND the large text
+- Blend text with image artistically
+- High-impact, editorial magazine style
+- Typography: Bebas Neue, Impact, or condensed bold fonts at 200+ pt scale
 """,
-            "product_focus": """
+            "product_focus": f"""
+{typography_base}
+
 PRODUCT FOCUS LAYOUT:
-- Clean e-commerce catalog style
-- Model poses naturally
-- Product name at top or bottom
-- Price clearly visible
-- Available sizes listed
-- Professional, commercial aesthetic
+- Full-bleed lifestyle image - model in natural pose
+- Product info (name, price) OVERLAID elegantly on image
+- Use subtle dark band or gradient for text area
+- Clean but NOT separate from the image
+- Typography: Contemporary sans-serif (Montserrat, Raleway)
+- Price should be bold but tasteful
 """,
-            "diagonal_split": """
+            "diagonal_split": f"""
+{typography_base}
+
 DIAGONAL SPLIT LAYOUT:
-- Dynamic diagonal line divides the image
-- Model on one side of the diagonal
-- Text content on the other side
-- Creates energy and movement
-- Modern, editorial feel
+- Full-bleed image with dynamic composition
+- Diagonal line created by gradient or semi-transparent color overlay
+- Model on one diagonal half, text on the other half's overlay
+- The image continues behind both - unified composition
+- Creates energy, movement, modern editorial feel
+- Typography: Angular, bold fonts that complement the diagonal energy
 """,
-            "centered_minimal": """
+            "centered_minimal": f"""
+{typography_base}
+
 CENTERED MINIMAL LAYOUT:
-- Model perfectly centered
-- Brand name above the model
-- Headline below the model
-- Maximum white/negative space
-- Gallery-style, balanced composition
+- Full-bleed image - model perfectly centered
+- Brand name OVERLAID at top of image (small, refined)
+- Headline OVERLAID at bottom of image (larger, impactful)
+- Maximum negative/breathing space
+- Gallery-style elegance
+- Typography: Thin, elegant (Montserrat Light or Playfair Display)
 """,
-            "story_card": """
+            "story_card": f"""
+{typography_base}
+
 STORY CARD LAYOUT:
-- Full 9:16 vertical format
-- Model fills most of the frame
-- Small logo/icon in corner
-- Headline and CTA at the bottom
-- Optimized for Instagram/social stories
+- Full-bleed 9:16 vertical image - model fills frame
+- Small logo/icon OVERLAID in corner
+- Headline and CTA OVERLAID at bottom with gradient behind
+- Instagram Story aesthetic - modern, mobile-first
+- Typography: Bold, readable at small sizes (Montserrat Bold, Oswald)
+- Engage-focused design - quick, punchy text
 """,
-            "lookbook_spread": """
+            "lookbook_spread": f"""
+{typography_base}
+
 LOOKBOOK SPREAD LAYOUT:
-- Editorial lookbook style
-- Model in upper portion
-- Brand name prominent
-- Headline large and impactful
-- Subtext and price below
-- Multiple text elements harmoniously placed
+- Full-bleed editorial image
+- Multiple text elements OVERLAID harmoniously across the composition
+- Brand name top-left or top-center
+- Headline strategically placed (could be beside model)
+- Price and details as elegant overlays
+- Fashion lookbook aesthetic - all text integrates with image
+- Typography: Mix of display and body fonts, editorial hierarchy
 """
         }
         
