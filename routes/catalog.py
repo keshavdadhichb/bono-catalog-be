@@ -1,6 +1,7 @@
 """
 Photo & Poster Generation API Routes
 Supports simple virtual try-on photos and full marketing posters
+With hybrid overlay system for perfect text/logo rendering
 """
 
 import uuid
@@ -15,6 +16,7 @@ import zipfile
 
 from services.gemini_client import GeminiClient
 from services.image_processor import ImageProcessor
+from services.overlay_service import OverlayService
 
 
 router = APIRouter()
@@ -34,6 +36,7 @@ class JobStatus(str, Enum):
     pending = "pending"
     processing = "processing"
     generating = "generating"
+    overlaying = "overlaying"
     completed = "completed"
     failed = "failed"
 
@@ -70,6 +73,8 @@ async def start_generation(
     headline_text: str = Form(""),
     sub_text: str = Form(""),
     layout_style: str = Form("framed_breakout"),
+    style_preset: str = Form(""),
+    text_color: str = Form("white"),  # "white" or "black"
     
     # Images
     front_images: List[UploadFile] = File(...),
@@ -115,6 +120,8 @@ async def start_generation(
         "headline_text": headline_text,
         "sub_text": sub_text,
         "layout_style": layout_style,
+        "style_preset": style_preset,
+        "text_color": text_color,
         
         # Images
         "front_images": front_data,
@@ -134,7 +141,7 @@ async def start_generation(
 
 
 async def process_generation_job(job_id: str):
-    """Process photo or poster generation job"""
+    """Process photo or poster generation job with hybrid overlay"""
     
     job = jobs.get(job_id)
     if not job:
@@ -143,6 +150,7 @@ async def process_generation_job(job_id: str):
     try:
         gemini = GeminiClient()
         processor = ImageProcessor()
+        overlay = OverlayService()
         
         job["status"] = JobStatus.processing
         job["message"] = "Preprocessing images..."
@@ -170,20 +178,37 @@ async def process_generation_job(job_id: str):
             job["message"] = f"Generating product {product_num}/{total_products}..."
             
             if is_poster_mode:
-                # Generate marketing poster (front view only for posters)
+                # Generate marketing poster (without text - AI generates clean image)
                 poster = await gemini.generate_catalog_poster(
                     garment_image=front,
-                    logo_image=job["logo"],
+                    logo_image=None,  # Logo added by overlay service
                     category=job["category"],
                     skin_tone=job["skin_tone"],
                     body_type=job["body_type"],
                     marketing_theme=job["marketing_theme"],
                     prop=job["prop"],
+                    pose_type=job["pose_type"],
+                    shot_angle=job["shot_angle"],
+                    headline_text="",  # Text added by overlay service
+                    sub_text="",
+                    layout_style=job["layout_style"],
+                    style_preset=job.get("style_preset", "")
+                )
+                
+                # Apply overlay with PIL for perfect text/logo
+                job["status"] = JobStatus.overlaying
+                job["message"] = f"Applying text overlay to product {product_num}..."
+                
+                final_poster = overlay.apply_overlay(
+                    image_bytes=poster,
+                    logo_bytes=job["logo"],
                     headline_text=job["headline_text"],
                     sub_text=job["sub_text"],
-                    layout_style=job["layout_style"]
+                    text_color=job.get("text_color", "white")
                 )
-                job["generated_images"].append((f"product_{product_num}_poster.png", poster))
+                
+                job["generated_images"].append((f"product_{product_num}_poster.png", final_poster))
+                job["status"] = JobStatus.generating
             else:
                 # Generate simple photos (front + back views)
                 front_model = await gemini.generate_model_image(
@@ -280,3 +305,16 @@ async def download_photos_zip(job_id: str):
             "Content-Disposition": f"attachment; filename={job['brand_name']}_{mode_suffix}.zip"
         }
     )
+
+
+@router.get("/presets")
+async def get_style_presets():
+    """Get available style presets"""
+    from services.gemini_client import STYLE_PRESETS, POSE_TYPES, PROP_INTERACTION, THEME_CONFIG
+    
+    return {
+        "presets": {k: v["description"] for k, v in STYLE_PRESETS.items()},
+        "poses": list(POSE_TYPES.keys()),
+        "props": list(PROP_INTERACTION.keys()),
+        "themes": list(THEME_CONFIG.keys())
+    }
