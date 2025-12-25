@@ -1,6 +1,6 @@
 """
-Photo Generation API Routes
-Simple virtual try-on photo generation (Vercel compatible - in-memory storage)
+Photo & Poster Generation API Routes
+Supports simple virtual try-on photos and full marketing posters
 """
 
 import uuid
@@ -49,18 +49,34 @@ class JobResponse(BaseModel):
 @router.post("/generate", response_model=JobResponse)
 async def start_generation(
     background_tasks: BackgroundTasks,
+    # Basic fields
     brand_name: str = Form(...),
     category: CategoryEnum = Form(...),
-    creative_direction: str = Form(""),
-    skin_tone: str = Form("medium brown"),
+    generation_mode: str = Form("photo"),  # "photo" or "poster"
+    
+    # Model appearance
+    skin_tone: str = Form("fair"),
     hair_type: str = Form("short black hair"),
     body_type: str = Form(""),
+    
+    # Photo mode fields
     shot_angle: str = Form("front_facing"),
     pose_type: str = Form("catalog_standard"),
+    creative_direction: str = Form(""),
+    
+    # Poster mode fields
+    marketing_theme: str = Form("studio_minimal"),
+    prop: str = Form("none"),
+    headline_text: str = Form(""),
+    sub_text: str = Form(""),
+    layout_style: str = Form("framed_breakout"),
+    
+    # Images
     front_images: List[UploadFile] = File(...),
-    back_images: List[UploadFile] = File(...)
+    back_images: List[UploadFile] = File(...),
+    logo: Optional[UploadFile] = File(None)
 ):
-    """Generate high-quality model photos"""
+    """Generate model photos or marketing posters"""
     
     if len(front_images) != len(back_images):
         raise HTTPException(status_code=400, detail="Number of front and back images must match")
@@ -72,6 +88,7 @@ async def start_generation(
     
     front_data = [await f.read() for f in front_images]
     back_data = [await b.read() for b in back_images]
+    logo_data = await logo.read() if logo else None
     
     jobs[job_id] = {
         "status": JobStatus.pending,
@@ -80,18 +97,33 @@ async def start_generation(
         "created_at": datetime.now(),
         "brand_name": brand_name,
         "category": category,
-        "creative_direction": creative_direction,
+        "generation_mode": generation_mode,
+        
+        # Model appearance
         "skin_tone": skin_tone,
         "hair_type": hair_type,
         "body_type": body_type,
+        
+        # Photo mode
         "shot_angle": shot_angle,
         "pose_type": pose_type,
+        "creative_direction": creative_direction,
+        
+        # Poster mode
+        "marketing_theme": marketing_theme,
+        "prop": prop,
+        "headline_text": headline_text,
+        "sub_text": sub_text,
+        "layout_style": layout_style,
+        
+        # Images
         "front_images": front_data,
         "back_images": back_data,
-        "generated_images": []  # List of (filename, bytes)
+        "logo": logo_data,
+        "generated_images": []
     }
     
-    background_tasks.add_task(process_photo_job, job_id)
+    background_tasks.add_task(process_generation_job, job_id)
     
     return JobResponse(
         job_id=job_id,
@@ -101,8 +133,8 @@ async def start_generation(
     )
 
 
-async def process_photo_job(job_id: str):
-    """Generate high-quality model photos - all in memory"""
+async def process_generation_job(job_id: str):
+    """Process photo or poster generation job"""
     
     job = jobs.get(job_id)
     if not job:
@@ -124,53 +156,73 @@ async def process_photo_job(job_id: str):
             job["progress"] = int((i + 1) / len(job["front_images"]) * 10)
         
         job["status"] = JobStatus.generating
-        job["message"] = "Generating model photos..."
         
         total_products = len(front_processed)
+        is_poster_mode = job["generation_mode"] == "poster"
+        
+        if is_poster_mode:
+            job["message"] = "Generating marketing posters..."
+        else:
+            job["message"] = "Generating model photos..."
         
         for i, (front, back) in enumerate(zip(front_processed, back_processed)):
             product_num = i + 1
             job["message"] = f"Generating product {product_num}/{total_products}..."
             
-            # Generate front view
-            front_model = await gemini.generate_model_image(
-                garment_image=front,
-                category=job["category"],
-                view="front",
-                skin_tone=job["skin_tone"],
-                hair_type=job["hair_type"],
-                body_type=job["body_type"],
-                shot_angle=job["shot_angle"],
-                pose_type=job["pose_type"],
-                creative_direction=job["creative_direction"]
-            )
-            
-            # Generate back view
-            back_model = await gemini.generate_model_image(
-                garment_image=back,
-                category=job["category"],
-                view="back",
-                skin_tone=job["skin_tone"],
-                hair_type=job["hair_type"],
-                body_type=job["body_type"],
-                shot_angle=job["shot_angle"],
-                pose_type=job["pose_type"],
-                creative_direction=job["creative_direction"]
-            )
-            
-            # Store in memory only
-            job["generated_images"].append((f"product_{product_num}_front.png", front_model))
-            job["generated_images"].append((f"product_{product_num}_back.png", back_model))
+            if is_poster_mode:
+                # Generate marketing poster (front view only for posters)
+                poster = await gemini.generate_catalog_poster(
+                    garment_image=front,
+                    logo_image=job["logo"],
+                    category=job["category"],
+                    skin_tone=job["skin_tone"],
+                    body_type=job["body_type"],
+                    marketing_theme=job["marketing_theme"],
+                    prop=job["prop"],
+                    headline_text=job["headline_text"],
+                    sub_text=job["sub_text"],
+                    layout_style=job["layout_style"]
+                )
+                job["generated_images"].append((f"product_{product_num}_poster.png", poster))
+            else:
+                # Generate simple photos (front + back views)
+                front_model = await gemini.generate_model_image(
+                    garment_image=front,
+                    category=job["category"],
+                    view="front",
+                    skin_tone=job["skin_tone"],
+                    hair_type=job["hair_type"],
+                    body_type=job["body_type"],
+                    shot_angle=job["shot_angle"],
+                    pose_type=job["pose_type"],
+                    creative_direction=job["creative_direction"]
+                )
+                
+                back_model = await gemini.generate_model_image(
+                    garment_image=back,
+                    category=job["category"],
+                    view="back",
+                    skin_tone=job["skin_tone"],
+                    hair_type=job["hair_type"],
+                    body_type=job["body_type"],
+                    shot_angle=job["shot_angle"],
+                    pose_type=job["pose_type"],
+                    creative_direction=job["creative_direction"]
+                )
+                
+                job["generated_images"].append((f"product_{product_num}_front.png", front_model))
+                job["generated_images"].append((f"product_{product_num}_back.png", back_model))
             
             job["progress"] = 10 + int((i + 1) / total_products * 90)
         
         # Clear input images to free memory
         job["front_images"] = []
         job["back_images"] = []
+        job["logo"] = None
         
         job["status"] = JobStatus.completed
         job["progress"] = 100
-        job["message"] = f"Generated {len(job['generated_images'])} photos"
+        job["message"] = f"Generated {len(job['generated_images'])} images"
         
     except Exception as e:
         job["status"] = JobStatus.failed
@@ -199,14 +251,14 @@ async def get_job_status(job_id: str):
 
 @router.get("/download/{job_id}")
 async def download_photos_zip(job_id: str):
-    """Download all photos as ZIP - from memory"""
+    """Download all generated images as ZIP"""
     
     job = jobs.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
     if job["status"] != JobStatus.completed:
-        raise HTTPException(status_code=400, detail="Photos not ready")
+        raise HTTPException(status_code=400, detail="Images not ready")
     
     if not job["generated_images"]:
         raise HTTPException(status_code=404, detail="No images found")
@@ -219,10 +271,12 @@ async def download_photos_zip(job_id: str):
     
     zip_buffer.seek(0)
     
+    mode_suffix = "posters" if job["generation_mode"] == "poster" else "photos"
+    
     return Response(
         content=zip_buffer.getvalue(),
         media_type="application/zip",
         headers={
-            "Content-Disposition": f"attachment; filename={job['brand_name']}_photos.zip"
+            "Content-Disposition": f"attachment; filename={job['brand_name']}_{mode_suffix}.zip"
         }
     )
