@@ -205,6 +205,36 @@ async def health_check():
     return {"status": "ok"}
 
 
+@router.get("/test-zip")
+async def test_zip():
+    """Test endpoint to verify ZIP binary response works on Vercel"""
+    from PIL import Image
+    
+    # Create a test image
+    img = Image.new('RGB', (200, 200), color='blue')
+    img_buffer = io.BytesIO()
+    img.save(img_buffer, format='PNG')
+    img_bytes = img_buffer.getvalue()
+    
+    # Create ZIP
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('test_image.png', img_bytes)
+    
+    zip_buffer.seek(0)
+    zip_content = zip_buffer.getvalue()
+    
+    return Response(
+        content=zip_content,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": 'attachment; filename="test.zip"',
+            "Content-Type": "application/zip",
+            "Content-Length": str(len(zip_content))
+        }
+    )
+
+
 @router.get("/presets")
 async def get_style_presets():
     from services.gemini_client import STYLE_PRESETS, POSE_TYPES, PROP_INTERACTION, THEME_CONFIG
@@ -214,3 +244,4 @@ async def get_style_presets():
         "props": list(PROP_INTERACTION.keys()),
         "themes": list(THEME_CONFIG.keys())
     }
+
