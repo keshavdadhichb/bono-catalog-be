@@ -75,8 +75,32 @@ LAYOUT_CONFIGS = {
     "product_focus": {
         "name": "Product Focus",
         "description": "Clean, product-centric catalog style",
-        "text_fields": ["product_name", "price", "sizes"],
+        "text_fields": ["headline", "price", "sizes"],
         "preview": "E-commerce style with product details"
+    },
+    "diagonal_split": {
+        "name": "Diagonal Split",
+        "description": "Dynamic diagonal divide with text",
+        "text_fields": ["headline", "subtext"],
+        "preview": "Diagonal composition for dynamic energy"
+    },
+    "centered_minimal": {
+        "name": "Centered Minimal",
+        "description": "Model centered, text above and below",
+        "text_fields": ["brand", "headline"],
+        "preview": "Balanced, gallery-style presentation"
+    },
+    "story_card": {
+        "name": "Story Card",
+        "description": "Instagram story style - 9:16 full bleed",
+        "text_fields": ["headline", "cta"],
+        "preview": "Social media optimized format"
+    },
+    "lookbook_spread": {
+        "name": "Lookbook Spread",
+        "description": "Editorial lookbook with multiple elements",
+        "text_fields": ["brand", "headline", "subtext", "price"],
+        "preview": "Rich editorial with all text elements"
     }
 }
 

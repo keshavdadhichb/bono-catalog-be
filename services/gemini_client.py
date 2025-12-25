@@ -641,6 +641,39 @@ PRODUCT FOCUS LAYOUT:
 - Price clearly visible
 - Available sizes listed
 - Professional, commercial aesthetic
+""",
+            "diagonal_split": """
+DIAGONAL SPLIT LAYOUT:
+- Dynamic diagonal line divides the image
+- Model on one side of the diagonal
+- Text content on the other side
+- Creates energy and movement
+- Modern, editorial feel
+""",
+            "centered_minimal": """
+CENTERED MINIMAL LAYOUT:
+- Model perfectly centered
+- Brand name above the model
+- Headline below the model
+- Maximum white/negative space
+- Gallery-style, balanced composition
+""",
+            "story_card": """
+STORY CARD LAYOUT:
+- Full 9:16 vertical format
+- Model fills most of the frame
+- Small logo/icon in corner
+- Headline and CTA at the bottom
+- Optimized for Instagram/social stories
+""",
+            "lookbook_spread": """
+LOOKBOOK SPREAD LAYOUT:
+- Editorial lookbook style
+- Model in upper portion
+- Brand name prominent
+- Headline large and impactful
+- Subtext and price below
+- Multiple text elements harmoniously placed
 """
         }
         
