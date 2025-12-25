@@ -491,6 +491,16 @@ Output: Single photorealistic image of the model wearing this exact garment."""
 Generate a STUNNING HIGH-RESOLUTION MARKETING POSTER / ADVERTISEMENT.
 {theme['camera']}
 
+=== CRITICAL GARMENT RULES (MOST IMPORTANT) ===
+⚠️ DO NOT ADD, REMOVE, OR MODIFY ANYTHING ON THE GARMENT
+⚠️ DO NOT ADD TEXT, LOGOS, GRAPHICS, OR ANY DESIGN TO THE T-SHIRT/GARMENT
+⚠️ THE GARMENT IN THE REFERENCE IMAGE MUST APPEAR EXACTLY AS-IS
+⚠️ IF THE REFERENCE GARMENT IS PLAIN, KEEP IT PLAIN
+⚠️ IF THE REFERENCE GARMENT HAS A DESIGN, REPRODUCE THAT EXACT DESIGN ONLY
+
+The garment you receive in the reference image is the FINAL PRODUCT.
+Your job is ONLY to put it on a model - NOT to design it.
+
 === COMPOSITION & LAYOUT ===
 Type: Premium Fashion Advertisement / Lookbook Poster
 Layout: {layout_desc}
@@ -508,28 +518,34 @@ Pose: {pose_desc}
 Camera Angle: {angle_desc}
 Props/Styling: {prop_desc}
 
-=== THE GARMENT (CRITICAL - EXACT REPRODUCTION) ===
-The model wears the garment from the reference image:
-- Reproduce graphic prints, logos, text with 100% accuracy
-- Exact color match to reference
-- Premium fabric appearance, natural draping
-- Visible fit and quality
+=== THE GARMENT (READ THIS AGAIN - CRITICAL) ===
+STRICT REPRODUCTION ONLY:
+- The model wears the EXACT garment from the reference image
+- DO NOT add any text to the garment
+- DO NOT add any graphics to the garment
+- DO NOT add any logos to the garment
+- DO NOT change the color of the garment
+- IF the garment is plain/blank in the reference, IT STAYS PLAIN/BLANK
+- Copy the garment PIXEL-PERFECT from the reference
+- Natural fabric draping and realistic wrinkles only
 
-=== DESIGN ELEMENTS ===
-{f'FRAME/LAYOUT: Apply the {layout_style} layout style as described above' if layout_style else ''}
-Leave strategic negative space for text overlay (will be added in post).
-The image should work as a complete composition even without text.
+=== OUTPUT IMAGE ===
+- Clean background image with model wearing the UNMODIFIED garment
+- Leave empty/negative space for text overlay (text added in post-production)
+- NO text anywhere in the image (text added later by software)
+- NO logos anywhere in the image (logos added later by software)
+- Just the model, background, and the EXACT garment from reference
 
-{preset_addon}
-
-=== TECHNICAL EXCELLENCE ===
+=== TECHNICAL ===
 - Resolution: 2K, print-ready quality
 - Sharpness: Razor-sharp focus on model
 - Color: Rich, vibrant, commercially appealing
-- Quality: Indistinguishable from real photoshoot
 
-Generate the complete marketing poster image WITHOUT any text or brand logos.
-Text and logo will be overlaid in post-production for guaranteed accuracy."""
+{preset_addon}
+
+FINAL REMINDER: Generate ONLY the model wearing the EXACT garment from reference. 
+DO NOT ADD ANY TEXT OR DESIGNS TO THE GARMENT. 
+Text and logos will be overlaid in post-production by software."""
 
         garment_pil = self._image_to_pil(garment_image)
         
