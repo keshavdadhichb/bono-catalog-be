@@ -168,18 +168,18 @@ Generate a single photorealistic image of the model wearing this exact garment."
         garment_pil = self._image_to_pil(garment_image)
         
         # Use Gemini 3 Pro Image with native 2K resolution
-        # Using dict for image_config for SDK compatibility
+        # Requires google-genai >= 1.50.0
         response = await asyncio.to_thread(
             self.client.models.generate_content,
             model=self.model,
             contents=[prompt, garment_pil],
-            config={
-                "response_modalities": ["TEXT", "IMAGE"],
-                "image_config": {
-                    "aspect_ratio": "3:4",
-                    "image_size": "2K"
-                }
-            }
+            config=types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"],
+                image_config=types.ImageConfig(
+                    aspect_ratio="3:4",
+                    image_size="2K"
+                )
+            )
         )
         
         return self._extract_image_from_response(response)
