@@ -454,7 +454,7 @@ Output: Single photorealistic image of the model wearing this exact garment."""
     # MARKETING POSTER GENERATION
     # ============================================
 
-    async def generate_catalog_poster(
+    async def generate_marketing_poster(
         self,
         garment_image: bytes,
         logo_image: Optional[bytes],
@@ -465,12 +465,13 @@ Output: Single photorealistic image of the model wearing this exact garment."""
         prop: str = "none",
         pose_type: str = "catalog_standard",
         shot_angle: str = "front_facing",
-        headline_text: str = "",
-        sub_text: str = "",
-        layout_style: str = "framed_breakout",
-        style_preset: str = ""
+        layout_style: str = "hero_bottom",
+        text_content: dict = None
     ) -> bytes:
-        """Generate a complete marketing catalog poster (2K resolution, 9:16 vertical)"""
+        """Generate marketing poster with layout-specific text rendering"""
+        
+        if text_content is None:
+            text_content = {}
         
         config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
         skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
@@ -478,84 +479,76 @@ Output: Single photorealistic image of the model wearing this exact garment."""
         prop_desc = PROP_INTERACTION.get(prop, PROP_INTERACTION["none"])
         pose_desc = POSE_TYPES.get(pose_type, POSE_TYPES["catalog_standard"])
         angle_desc = SHOT_ANGLES.get(shot_angle, SHOT_ANGLES["front_facing"])
-        layout_desc = LAYOUT_STYLES.get(layout_style, LAYOUT_STYLES["framed_breakout"])
         build = body_type if body_type else config["default_build"]
         
-        # Apply style preset if selected
-        preset_addon = ""
-        if style_preset and style_preset in STYLE_PRESETS:
-            preset = STYLE_PRESETS[style_preset]
-            preset_addon = preset.get("prompt_addon", "")
+        # Build layout-specific text instructions
+        text_instructions = self._build_text_instructions(layout_style, text_content)
+        layout_prompt = self._get_layout_prompt(layout_style)
         
         prompt = f"""You are a world-class Fashion Art Director and Commercial Photographer.
 Generate a STUNNING HIGH-RESOLUTION MARKETING POSTER / ADVERTISEMENT.
-{theme['camera']}
 
-=== CRITICAL GARMENT RULES (MOST IMPORTANT) ===
-⚠️ DO NOT ADD, REMOVE, OR MODIFY ANYTHING ON THE GARMENT
-⚠️ DO NOT ADD TEXT, LOGOS, GRAPHICS, OR ANY DESIGN TO THE T-SHIRT/GARMENT
-⚠️ THE GARMENT IN THE REFERENCE IMAGE MUST APPEAR EXACTLY AS-IS
-⚠️ IF THE REFERENCE GARMENT IS PLAIN, KEEP IT PLAIN
-⚠️ IF THE REFERENCE GARMENT HAS A DESIGN, REPRODUCE THAT EXACT DESIGN ONLY
+=== CRITICAL GARMENT RULES ===
+⚠️ DO NOT modify the garment design in ANY way
+⚠️ The t-shirt/garment must appear EXACTLY as in the reference image
+⚠️ If the garment has a print/graphic, reproduce it EXACTLY
+⚠️ If the garment is PLAIN, keep it PLAIN - do NOT add anything
 
-The garment you receive in the reference image is the FINAL PRODUCT.
-Your job is ONLY to put it on a model - NOT to design it.
+=== LAYOUT STRUCTURE ===
+{layout_prompt}
 
-=== COMPOSITION & LAYOUT ===
-Type: Premium Fashion Advertisement / Lookbook Poster
-Layout: {layout_desc}
-Background: {theme['background_desc']}
-Lighting: {theme['lighting']}
-Mood: {theme['mood']}
+=== TYPOGRAPHY & TEXT ===
+{text_instructions}
+
+Typography Style:
+- Use clean, modern sans-serif fonts
+- Text must be PERFECTLY readable and spelled correctly
+- High contrast with background for visibility
+- Professional fashion magazine quality
 
 === THE MODEL ===
 Subject: {config['description']}, {config['age_range']}
 Skin: {skin_desc}
 Build: {build}
-Hair: Well-styled, fashionable, photo-ready
-Expression: Cool, confident, professional model expression
 Pose: {pose_desc}
 Camera Angle: {angle_desc}
-Props/Styling: {prop_desc}
+Props: {prop_desc}
 
-=== THE GARMENT (READ THIS AGAIN - CRITICAL) ===
-STRICT REPRODUCTION ONLY:
-- The model wears the EXACT garment from the reference image
-- DO NOT add any text to the garment
-- DO NOT add any graphics to the garment
-- DO NOT add any logos to the garment
-- DO NOT change the color of the garment
-- IF the garment is plain/blank in the reference, IT STAYS PLAIN/BLANK
-- Copy the garment PIXEL-PERFECT from the reference
-- Natural fabric draping and realistic wrinkles only
+=== ENVIRONMENT ===
+Background: {theme['background_desc']}
+Lighting: {theme['lighting']}
+Mood: {theme['mood']}
+{theme['camera']}
 
-=== OUTPUT IMAGE ===
-- Clean background image with model wearing the UNMODIFIED garment
-- Leave empty/negative space for text overlay (text added in post-production)
-- NO text anywhere in the image (text added later by software)
-- NO logos anywhere in the image (logos added later by software)
-- Just the model, background, and the EXACT garment from reference
+=== THE GARMENT ===
+The model wears the garment from the reference image.
+REPRODUCE THE GARMENT EXACTLY:
+- Same colors, same patterns, same graphics
+- If it has text/logo, reproduce exactly
+- If it's plain, keep it plain
+- Natural draping and realistic wrinkles
 
-=== TECHNICAL ===
-- Resolution: 2K, print-ready quality
-- Sharpness: Razor-sharp focus on model
-- Color: Rich, vibrant, commercially appealing
+=== TECHNICAL SPECS ===
+- Resolution: 2K, print-ready
+- Aspect ratio: 9:16 vertical (social media poster format)
+- Sharp focus on model and text
+- Rich, vibrant colors
 
-{preset_addon}
-
-FINAL REMINDER: Generate ONLY the model wearing the EXACT garment from reference. 
-DO NOT ADD ANY TEXT OR DESIGNS TO THE GARMENT. 
-Text and logos will be overlaid in post-production by software."""
+Generate a complete professional marketing poster."""
 
         garment_pil = self._image_to_pil(garment_image)
         
         contents = [prompt, garment_pil]
-        # Note: Logo will be overlaid by overlay_service, not by AI
         
-        # Try primary model first, fallback to simpler model if fails
+        # Add logo if provided
+        if logo_image:
+            logo_pil = self._image_to_pil(logo_image)
+            contents.append(logo_pil)
+        
+        # Try primary model first, fallback if fails
         for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
             try:
-                print(f"Attempting poster generation with {model_to_use} (attempt {attempt + 1})")
+                print(f"Generating poster with {model_to_use} (attempt {attempt + 1})")
                 
                 response = await asyncio.to_thread(
                     self.client.models.generate_content,
@@ -574,8 +567,112 @@ Text and logos will be overlaid in post-production by software."""
                 
             except Exception as e:
                 print(f"Model {model_to_use} failed: {e}")
-                if attempt == 1:  # Last attempt
+                if attempt == 1:
                     raise
-                print("Retrying with fallback model...")
+                print("Retrying with fallback...")
         
-        raise ValueError("All models failed to generate image")
+        raise ValueError("All models failed")
+    
+    def _get_layout_prompt(self, layout_style: str) -> str:
+        """Get detailed layout instructions for each style"""
+        
+        layouts = {
+            "hero_bottom": """
+HERO BOTTOM LAYOUT:
+- Model takes up 70% of the image (top portion)
+- Large, bold headline text at the bottom 30%
+- Subtitle below the headline
+- Text should be centered horizontally
+- Use dramatic negative space around text
+""",
+            "split_vertical": """
+SPLIT VERTICAL LAYOUT:
+- Image divided 50/50 vertically
+- Left side: Model with garment
+- Right side: Clean color panel with text
+- Text panel has headline, subtext, and any pricing
+- Text is left-aligned on the panel
+""",
+            "magazine_cover": """
+MAGAZINE COVER LAYOUT:
+- Brand name/logo at very top (masthead style)
+- Model in center, full presence
+- Headline text overlaid on lower portion
+- Subtext below headline
+- Classic fashion magazine aesthetic
+""",
+            "minimal_corner": """
+MINIMAL CORNER LAYOUT:
+- Model dominates 95% of the image
+- Only small brand text in one corner
+- Tagline if provided, very subtle
+- Clean, minimal, gallery-style aesthetic
+- Maximum focus on the garment
+""",
+            "overlay_gradient": """
+OVERLAY GRADIENT LAYOUT:
+- Full-bleed image of model
+- Dark gradient overlay from bottom
+- Text appears over the gradient
+- Headline large and bold
+- CTA button-style text if provided
+""",
+            "framed_border": """
+FRAMED BORDER LAYOUT:
+- Image has clean white border/frame
+- Model inside the frame
+- Text BELOW the frame
+- Headline and subtext centered below image
+- Elegant, gallery-poster style
+""",
+            "bold_typography": """
+BOLD TYPOGRAPHY LAYOUT:
+- 60% of image is large, impactful text
+- 40% shows the model
+- Text dominates the composition
+- Model can be partially visible
+- High-impact, editorial style
+""",
+            "product_focus": """
+PRODUCT FOCUS LAYOUT:
+- Clean e-commerce catalog style
+- Model poses naturally
+- Product name at top or bottom
+- Price clearly visible
+- Available sizes listed
+- Professional, commercial aesthetic
+"""
+        }
+        
+        return layouts.get(layout_style, layouts["hero_bottom"])
+    
+    def _build_text_instructions(self, layout_style: str, text_content: dict) -> str:
+        """Build text placement instructions based on layout and content"""
+        
+        headline = text_content.get("headline", "")
+        subtext = text_content.get("subtext", "")
+        brand = text_content.get("brand", "")
+        price = text_content.get("price", "")
+        cta = text_content.get("cta", "")
+        tagline = text_content.get("tagline", "")
+        
+        instructions = []
+        
+        if headline:
+            instructions.append(f'HEADLINE TEXT: "{headline}" - Large, bold, prominent')
+        if subtext:
+            instructions.append(f'SUBTEXT: "{subtext}" - Smaller, below headline')
+        if brand:
+            instructions.append(f'BRAND/LOGO TEXT: "{brand}" - Clean, professional')
+        if price:
+            instructions.append(f'PRICE: "{price}" - Bold, easy to read')
+        if cta:
+            instructions.append(f'CALL TO ACTION: "{cta}" - Prominent, action-oriented')
+        if tagline:
+            instructions.append(f'TAGLINE: "{tagline}" - Elegant, subtle')
+        
+        if not instructions:
+            return "No text overlay needed. Create a clean image suitable for post-production text addition."
+        
+        return "\n".join(instructions)
+
