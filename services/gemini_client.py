@@ -1,13 +1,9 @@
 """
-Gemini + Imagen Image API Client
-High-Quality Virtual Try-On Photo Generation
+Gemini 3 Pro Image (Nano Banana Pro) API Client
+Native 2K/4K High-Quality Virtual Try-On Photo Generation
 
-APPROACH:
-1. Use Gemini for virtual try-on (puts garment on model)
-2. Use Imagen 3 for high-resolution 2K output
-
-Note: Gemini generate_content with images outputs ~1K max. 
-For true 2K, we use the Gemini output, then upscale using PIL.
+MODEL: gemini-3-pro-image-preview
+RESOLUTION: Native 2K (2048px) or 4K (3072px)
 """
 
 import os
@@ -58,7 +54,7 @@ POSE_TYPES = {
 
 
 class GeminiClient:
-    """Client for Gemini Image API - 2K High Quality Photo Generation with Upscaling"""
+    """Client for Gemini 3 Pro Image - Native 2K High Quality Photo Generation"""
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
@@ -66,9 +62,8 @@ class GeminiClient:
             raise ValueError("GOOGLE_API_KEY environment variable is required")
         
         self.client = genai.Client(api_key=self.api_key)
-        self.model = "gemini-2.0-flash-exp"
-        # Target 2K resolution
-        self.target_resolution = 2048
+        # Gemini 3 Pro Image Preview - supports native 2K and 4K
+        self.model = "gemini-3-pro-image-preview"
     
     def _image_to_pil(self, image_bytes: bytes) -> Image.Image:
         return Image.open(BytesIO(image_bytes))
@@ -82,24 +77,6 @@ class GeminiClient:
             image.save(buffer, format="JPEG", quality=100, subsampling=0)
         buffer.seek(0)
         return buffer.getvalue()
-    
-    def _upscale_to_2k(self, image_bytes: bytes) -> bytes:
-        """Upscale image to 2K resolution using high-quality LANCZOS resampling"""
-        img = self._image_to_pil(image_bytes)
-        width, height = img.size
-        
-        # Calculate new dimensions to make largest side 2048px
-        if width > height:
-            new_width = self.target_resolution
-            new_height = int(height * (self.target_resolution / width))
-        else:
-            new_height = self.target_resolution
-            new_width = int(width * (self.target_resolution / height))
-        
-        # High-quality upscale using LANCZOS
-        img_upscaled = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-        
-        return self._pil_to_bytes(img_upscaled, format="PNG")
     
     def _extract_image_from_response(self, response) -> bytes:
         """Extract image from Gemini response"""
@@ -143,19 +120,13 @@ class GeminiClient:
         creative_direction: str = ""
     ) -> bytes:
         """
-        Generate a high-quality 2K virtual try-on image
+        Generate a native 2K virtual try-on image
         
-        Process:
-        1. Generate with Gemini (1K output)
-        2. Upscale to 2K using LANCZOS
-        
-        Returns PNG image at 2048px
+        Uses gemini-3-pro-image-preview with image_size="2K"
+        Returns PNG image at 2048px resolution
         """
         config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
-        
-        # Enhanced skin tone description
         skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
-        
         angle_desc = SHOT_ANGLES.get(shot_angle, SHOT_ANGLES["front_facing"])
         pose_desc = POSE_TYPES.get(pose_type, POSE_TYPES["catalog_standard"])
         build = body_type if body_type else config["default_build"]
@@ -196,20 +167,18 @@ Generate a single photorealistic image of the model wearing this exact garment."
 
         garment_pil = self._image_to_pil(garment_image)
         
-        # Generate with Gemini
+        # Use Gemini 3 Pro Image with native 2K resolution
         response = await asyncio.to_thread(
             self.client.models.generate_content,
             model=self.model,
             contents=[prompt, garment_pil],
             config=types.GenerateContentConfig(
-                response_modalities=['TEXT', 'IMAGE']
+                response_modalities=['TEXT', 'IMAGE'],
+                image_config=types.ImageConfig(
+                    aspect_ratio="3:4",  # Portrait aspect for full body
+                    image_size="2K"  # Native 2K resolution (2048px)
+                )
             )
         )
         
-        # Extract image from response
-        image_bytes = self._extract_image_from_response(response)
-        
-        # Upscale to 2K resolution
-        image_2k = self._upscale_to_2k(image_bytes)
-        
-        return image_2k
+        return self._extract_image_from_response(response)
