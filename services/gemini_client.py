@@ -2,7 +2,8 @@
 Gemini Image API Client
 High-Quality Virtual Try-On Photo Generation
 
-OUTPUT: 2K resolution images with ZERO quality degradation
+MODEL: gemini-3-pro-image-preview
+RESOLUTION: 2K (2048px)
 """
 
 import os
@@ -14,14 +15,25 @@ from google import genai
 from google.genai import types
 
 
-# Model configurations
+# Model configurations with enhanced Indian skin tone descriptions
 MODEL_CONFIG = {
-    "men": {"description": "adult male", "age_range": "25-35 years old", "default_build": "athletic build"},
-    "women": {"description": "adult female", "age_range": "25-35 years old", "default_build": "slim build"},
-    "teen_boy": {"description": "teenage boy", "age_range": "12-16 years old", "default_build": "lean build"},
-    "teen_girl": {"description": "teenage girl", "age_range": "12-16 years old", "default_build": "slim build"},
-    "infant_boy": {"description": "young boy child", "age_range": "4-8 years old", "default_build": "child proportions"},
-    "infant_girl": {"description": "young girl child", "age_range": "4-8 years old", "default_build": "child proportions"}
+    "men": {"description": "adult Indian male", "age_range": "25-35 years old", "default_build": "athletic build"},
+    "women": {"description": "adult Indian female", "age_range": "25-35 years old", "default_build": "slim build"},
+    "teen_boy": {"description": "Indian teenage boy", "age_range": "12-16 years old", "default_build": "lean build"},
+    "teen_girl": {"description": "Indian teenage girl", "age_range": "12-16 years old", "default_build": "slim build"},
+    "infant_boy": {"description": "young Indian boy child", "age_range": "4-8 years old", "default_build": "child proportions"},
+    "infant_girl": {"description": "young Indian girl child", "age_range": "4-8 years old", "default_build": "child proportions"}
+}
+
+# Enhanced skin tone descriptions for Indian models
+SKIN_TONES = {
+    "fair": "fair North Indian skin tone, light complexion typical of Punjab/Kashmir region",
+    "light": "light wheat complexion, North Indian skin tone",
+    "wheatish": "wheatish skin tone, typical Indian complexion",
+    "medium": "medium brown Indian skin tone",
+    "medium brown": "medium brown skin tone, typical of Central India",
+    "dark brown": "dark brown skin tone, South Indian complexion",
+    "deep": "deep dark skin tone"
 }
 
 SHOT_ANGLES = {
@@ -42,7 +54,7 @@ POSE_TYPES = {
 
 
 class GeminiClient:
-    """Client for Gemini Image API - High Quality Photo Generation"""
+    """Client for Gemini Image API - 2K High Quality Photo Generation"""
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
@@ -50,7 +62,8 @@ class GeminiClient:
             raise ValueError("GOOGLE_API_KEY environment variable is required")
         
         self.client = genai.Client(api_key=self.api_key)
-        self.model = "gemini-2.0-flash-exp"
+        # Use gemini-3-pro-image-preview for 2K resolution
+        self.model = "gemini-3-pro-image-preview"
     
     def _image_to_pil(self, image_bytes: bytes) -> Image.Image:
         return Image.open(BytesIO(image_bytes))
@@ -59,10 +72,8 @@ class GeminiClient:
         """Convert PIL Image to bytes with MAXIMUM quality"""
         buffer = BytesIO()
         if format.upper() == "PNG":
-            # PNG is lossless - best quality
             image.save(buffer, format="PNG", optimize=False)
         else:
-            # JPEG with max quality
             image.save(buffer, format="JPEG", quality=quality, subsampling=0)
         buffer.seek(0)
         return buffer.getvalue()
@@ -87,7 +98,6 @@ class GeminiClient:
                 if hasattr(part, 'as_image'):
                     pil_image = part.as_image()
                     if pil_image:
-                        # Return as PNG for lossless quality
                         return self._pil_to_bytes(pil_image, format="PNG")
                 elif hasattr(part.inline_data, 'data'):
                     return part.inline_data.data
@@ -102,7 +112,7 @@ class GeminiClient:
         garment_image: bytes,
         category: str,
         view: Literal["front", "back"],
-        skin_tone: str = "medium brown",
+        skin_tone: str = "fair",
         hair_type: str = "short black hair",
         body_type: str = "",
         shot_angle: str = "front_facing",
@@ -112,57 +122,69 @@ class GeminiClient:
         """
         Generate a high-quality 2K virtual try-on image
         
+        Uses gemini-3-pro-image-preview with medium quality (2K resolution)
         Returns PNG image with ZERO quality degradation
         """
-        config = MODEL_CONFIG.get(category, MODEL_CONFIG["men"])
+        config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
+        
+        # Enhanced skin tone description
+        skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
+        
         angle_desc = SHOT_ANGLES.get(shot_angle, SHOT_ANGLES["front_facing"])
         pose_desc = POSE_TYPES.get(pose_type, POSE_TYPES["catalog_standard"])
         build = body_type if body_type else config["default_build"]
         
-        prompt = f"""Create a HIGH RESOLUTION professional fashion catalog photograph.
+        prompt = f"""Create a PHOTOREALISTIC high-resolution fashion catalog photograph.
 
 MODEL DESCRIPTION:
 - {config['description']}, {config['age_range']}
-- Skin tone: {skin_tone}
-- Hair: {hair_type}
-- Body type: {build}
+- Skin: {skin_desc}
+- Hair: {hair_type}, well-groomed
+- Build: {build}
+- Expression: Natural, confident, pleasant
 
-POSE & CAMERA:
+CAMERA & POSE:
 - View: {view} view of the model
 - Angle: {angle_desc}
 - Pose: {pose_desc}
+- Framing: Full body shot, head to toe visible
 
-GARMENT REQUIREMENTS:
-- Model is wearing EXACTLY this garment shown in the reference image
-- Preserve ALL graphics, logos, text, and printed elements EXACTLY as shown
-- Do NOT alter, reimagine, or regenerate any design elements on the garment
-- The fabric texture, color, and pattern must match the reference precisely
-- Natural fabric draping and realistic wrinkles based on the model's pose
+GARMENT REQUIREMENTS (CRITICAL):
+- Model is wearing EXACTLY this garment from the reference image
+- The garment design, graphics, logos, text MUST be preserved EXACTLY
+- Do NOT alter, modify, or reimagine any printed elements
+- Fabric color, texture, and pattern must match reference precisely
+- Natural draping based on model's pose and body
 
 PHOTOGRAPHY STYLE:
-- Clean white/off-white studio background
+- Clean white studio background
 - Professional soft lighting, no harsh shadows
-- High-end fashion catalog aesthetic
-- FULL BODY shot showing complete outfit
-- Sharp focus, high resolution, studio quality
+- High-end fashion catalog aesthetic (like Zara, H&M lookbook)
+- Crisp, sharp focus throughout
+- No visible background elements or props
 
-OUTPUT QUALITY:
-- Photorealistic result indistinguishable from a real photoshoot
-- No synthetic or AI-looking artifacts
-- Maximum detail and clarity
+QUALITY REQUIREMENTS:
+- Photorealistic result, indistinguishable from real photography
+- No AI artifacts, distortions, or unnatural elements
+- Consistent skin texture and natural skin details
+- High resolution output suitable for print
 
-{f"CREATIVE DIRECTION: {creative_direction}" if creative_direction else ""}
+{f"ADDITIONAL DIRECTION: {creative_direction}" if creative_direction else ""}
 
-CRITICAL: The garment design must be EXACTLY preserved from the reference image."""
+OUTPUT: A single photorealistic image of the model wearing the garment."""
 
         garment_pil = self._image_to_pil(garment_image)
         
+        # Use 2K resolution (medium quality)
         response = await asyncio.to_thread(
             self.client.models.generate_content,
             model=self.model,
             contents=[prompt, garment_pil],
             config=types.GenerateContentConfig(
-                response_modalities=['TEXT', 'IMAGE']
+                response_modalities=['TEXT', 'IMAGE'],
+                image_config=types.ImageConfig(
+                    image_size="medium"  # 2K resolution (2048px)
+                )
             )
         )
         
