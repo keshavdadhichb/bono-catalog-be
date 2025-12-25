@@ -300,3 +300,196 @@ async def get_style_presets():
         "themes": list(THEME_CONFIG.keys()),
         "layouts": LAYOUT_CONFIGS
     }
+
+
+# ============================================
+# MASTER CATALOG FEATURE
+# ============================================
+
+# Hardcoded contact details
+BONO_CONTACT = {
+    "company": "BONOSTYLE CREATIONS LLP",
+    "email": "contact@bonostyle.in",
+    "phone": "(+91) 9789116300",
+    "address": "3238C, 2nd Street, P.N Road, Anna Nagar, Tiruppur, Tamil Nadu - 641602",
+    "website": "bonostyle.in"
+}
+
+# Assorted options for variety in catalog
+CATALOG_POSES = ["catalog_standard", "hands_on_hips", "hands_in_pockets", "arms_crossed", "walking", "leaning_wall", "editorial_dramatic"]
+CATALOG_PROPS = ["none", "sunglasses", "cap", "watch", "headphones"]
+CATALOG_LAYOUTS = ["hero_bottom", "split_vertical", "magazine_cover", "overlay_gradient", "framed_border", "product_focus", "lookbook_spread"]
+
+
+@router.post("/generate-catalog")
+async def generate_master_catalog(
+    # Basic fields
+    category: CategoryEnum = Form(...),
+    collection_name: str = Form(...),
+    collection_number: str = Form(""),
+    theme: str = Form("studio_minimal"),
+    
+    # Model appearance
+    skin_tone: str = Form("fair"),
+    body_type: str = Form(""),
+    
+    # Optional text fields (10 total, all optional)
+    text_tagline: str = Form(""),
+    text_season: str = Form(""),
+    text_year: str = Form(""),
+    text_price_range: str = Form(""),
+    text_fabric: str = Form(""),
+    text_brand_message: str = Form(""),
+    text_custom_1: str = Form(""),
+    text_custom_2: str = Form(""),
+    text_custom_3: str = Form(""),
+    text_custom_4: str = Form(""),
+    
+    # Images
+    front_images: List[UploadFile] = File(...),
+    back_images: List[UploadFile] = File(...),
+    logo: Optional[UploadFile] = File(None)
+):
+    """Generate a complete Master Catalog: Cover + N product pages + Thank You page"""
+    
+    if len(front_images) != len(back_images):
+        raise HTTPException(status_code=400, detail="Number of front and back images must match")
+    
+    if len(front_images) < 1 or len(front_images) > 20:
+        raise HTTPException(status_code=400, detail="Provide 1-20 products")
+    
+    num_products = len(front_images)
+    print(f"Master Catalog: {num_products} products, theme: {theme}")
+    
+    try:
+        gemini = GeminiClient()
+        processor = ImageProcessor()
+        
+        # Read uploads
+        front_data = [await f.read() for f in front_images]
+        back_data = [await b.read() for b in back_images]
+        logo_data = await logo.read() if logo else None
+        
+        # Preprocess garments
+        front_processed = [processor.prepare_garment(f) for f in front_data]
+        back_processed = [processor.prepare_garment(b) for b in back_data]
+        
+        generated_images = []
+        
+        # Gather optional texts
+        text_content = {
+            "tagline": text_tagline,
+            "season": text_season,
+            "year": text_year,
+            "price_range": text_price_range,
+            "fabric": text_fabric,
+            "brand_message": text_brand_message,
+            "custom_1": text_custom_1,
+            "custom_2": text_custom_2,
+            "custom_3": text_custom_3,
+            "custom_4": text_custom_4
+        }
+        
+        # ========== 1. COVER PAGE ==========
+        print("Generating cover page...")
+        cover = await gemini.generate_catalog_cover(
+            logo_image=logo_data,
+            collection_name=collection_name,
+            collection_number=collection_number,
+            theme=theme,
+            text_content=text_content
+        )
+        generated_images.append(("00_cover.png", cover))
+        
+        # ========== 2. PRODUCT PAGES (N pages, assorted styles) ==========
+        for i, (front, back) in enumerate(zip(front_processed, back_processed)):
+            page_num = i + 1
+            
+            # Cycle through poses, props, layouts for variety
+            pose = CATALOG_POSES[i % len(CATALOG_POSES)]
+            prop = CATALOG_PROPS[i % len(CATALOG_PROPS)]
+            layout = CATALOG_LAYOUTS[i % len(CATALOG_LAYOUTS)]
+            
+            print(f"Generating product {page_num}/{num_products} - layout: {layout}")
+            
+            # Generate FRONT view
+            front_page = await gemini.generate_marketing_poster(
+                garment_image=front,
+                logo_image=logo_data,
+                category=category,
+                skin_tone=skin_tone,
+                body_type=body_type,
+                marketing_theme=theme,
+                prop=prop,
+                pose_type=pose,
+                shot_angle="front_facing",
+                layout_style=layout,
+                text_content={
+                    "brand": collection_name,
+                    "headline": text_content.get("tagline", ""),
+                    "price": text_content.get("price_range", ""),
+                    "subtext": text_content.get("fabric", "")
+                }
+            )
+            generated_images.append((f"{page_num:02d}_product_{page_num}_front.png", front_page))
+            
+            # Generate BACK view with different layout
+            back_layout = CATALOG_LAYOUTS[(i + 3) % len(CATALOG_LAYOUTS)]
+            back_pose = CATALOG_POSES[(i + 2) % len(CATALOG_POSES)]
+            
+            back_page = await gemini.generate_marketing_poster(
+                garment_image=back,
+                logo_image=logo_data,
+                category=category,
+                skin_tone=skin_tone,
+                body_type=body_type,
+                marketing_theme=theme,
+                prop="none",
+                pose_type=back_pose,
+                shot_angle="back_view",
+                layout_style=back_layout,
+                text_content={
+                    "brand": collection_name,
+                    "subtext": "Back View"
+                }
+            )
+            generated_images.append((f"{page_num:02d}_product_{page_num}_back.png", back_page))
+        
+        # ========== 3. THANK YOU PAGE ==========
+        print("Generating thank you page...")
+        thankyou = await gemini.generate_catalog_thankyou(
+            logo_image=logo_data,
+            collection_name=collection_name,
+            theme=theme,
+            product_images=front_processed[:6],  # Max 6 for collage
+            contact_info=BONO_CONTACT
+        )
+        generated_images.append(("99_thankyou.png", thankyou))
+        
+        print(f"Generated {len(generated_images)} images, creating ZIP...")
+        
+        # Create ZIP
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for filename, image_bytes in generated_images:
+                print(f"Adding: {filename} ({len(image_bytes)} bytes)")
+                zf.writestr(filename, image_bytes)
+        
+        zip_buffer.seek(0)
+        
+        safe_name = "".join(c for c in collection_name if c.isalnum() or c in ' -_').strip() or "catalog"
+        
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{safe_name}_catalog.zip"'
+            }
+        )
+        
+    except Exception as e:
+        print(f"Catalog generation failed: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Catalog generation failed: {str(e)}")
+

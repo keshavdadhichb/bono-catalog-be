@@ -709,3 +709,197 @@ LOOKBOOK SPREAD LAYOUT:
         
         return "\n".join(instructions)
 
+    # ============================================
+    # MASTER CATALOG GENERATION
+    # ============================================
+
+    async def generate_catalog_cover(
+        self,
+        logo_image: Optional[bytes],
+        collection_name: str,
+        collection_number: str,
+        theme: str,
+        text_content: dict
+    ) -> bytes:
+        """Generate a stunning catalog cover page (no model, just branding)"""
+        
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        
+        # Build text info
+        text_lines = []
+        if text_content.get("tagline"):
+            text_lines.append(f'Tagline: "{text_content["tagline"]}"')
+        if text_content.get("season"):
+            text_lines.append(f'Season: "{text_content["season"]}"')
+        if text_content.get("year"):
+            text_lines.append(f'Year: "{text_content["year"]}"')
+        if text_content.get("brand_message"):
+            text_lines.append(f'Message: "{text_content["brand_message"]}"')
+        
+        additional_text = "\n".join(text_lines) if text_lines else "No additional text"
+        
+        prompt = f"""You are a world-class Graphic Designer and Art Director.
+Generate a STUNNING CATALOG COVER PAGE for a fashion collection.
+
+=== THIS IS A COVER PAGE - NO MODEL ===
+DO NOT include any person or model in this image.
+This is purely a branding/title page for the catalog.
+
+=== COLLECTION INFO ===
+Collection Name: "{collection_name}"
+Collection Number: "{collection_number}"
+
+=== TYPOGRAPHY ===
+- Collection name should be LARGE and PROMINENT
+- Use elegant, high-end fashion typography
+- Collection number styled as secondary element
+{additional_text}
+
+=== DESIGN ===
+Background Style: {theme_config['background_desc']}
+Mood: {theme_config['mood']}
+Lighting: {theme_config['lighting']}
+
+- Create a luxurious, high-end catalog cover
+- Professional fashion brand aesthetic
+- The page should feel COMPLETE and PREMIUM
+- DO NOT leave the page looking empty
+- Use decorative elements, patterns, or color blocks to fill space
+- Center the text elements beautifully
+
+=== TECHNICAL ===
+- Resolution: 2K, print-ready
+- Aspect ratio: 9:16 vertical
+- Sharp, clean design
+
+Generate an elegant catalog cover page."""
+
+        contents = [prompt]
+        
+        if logo_image:
+            logo_pil = self._image_to_pil(logo_image)
+            contents.append(logo_pil)
+            contents.append("Include this logo prominently in the design, at the top or center.")
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating cover with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await asyncio.to_thread(
+                    self.client.models.generate_content,
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size="2K" if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    async def generate_catalog_thankyou(
+        self,
+        logo_image: Optional[bytes],
+        collection_name: str,
+        theme: str,
+        product_images: list,
+        contact_info: dict
+    ) -> bytes:
+        """Generate a thank you page with product collage and contact info"""
+        
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        
+        # Format contact info
+        contact_text = f"""
+Contact Details:
+- Company: {contact_info.get('company', '')}
+- Email: {contact_info.get('email', '')}
+- Phone: {contact_info.get('phone', '')}
+- Website: {contact_info.get('website', '')}
+- Address: {contact_info.get('address', '')}
+"""
+        
+        prompt = f"""You are a world-class Graphic Designer and Art Director.
+Generate a THANK YOU PAGE for a fashion catalog.
+
+=== PAGE PURPOSE ===
+This is the FINAL page of a fashion catalog.
+Include "Thank You" message and contact information.
+
+=== CONTENT TO INCLUDE ===
+1. Large "THANK YOU" or "Thank You for Viewing" message
+2. Collection name: "{collection_name}"
+3. Contact information (display elegantly):
+{contact_text}
+
+=== LAYOUT ===
+- "Thank You" message prominent at top
+- Small collage/grid preview of products in middle (if product images provided)
+- Contact details at bottom, professionally formatted
+- Logo if provided
+
+=== DESIGN ===
+Background Style: {theme_config['background_desc']}
+Mood: {theme_config['mood']}
+
+- Elegant, professional closing page
+- Consistent with catalog branding
+- The page should look COMPLETE and FINISHED
+- Use decorative elements to create visual interest
+
+=== TECHNICAL ===
+- Resolution: 2K, print-ready
+- Aspect ratio: 9:16 vertical
+
+Generate a beautiful catalog closing page."""
+
+        contents = [prompt]
+        
+        if logo_image:
+            logo_pil = self._image_to_pil(logo_image)
+            contents.append(logo_pil)
+            contents.append("Include this logo in the design.")
+        
+        # Add a few product images for the collage (max 4)
+        for i, img in enumerate(product_images[:4]):
+            product_pil = self._image_to_pil(img)
+            contents.append(product_pil)
+            contents.append(f"Product {i+1} for collage preview")
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating thank you page with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await asyncio.to_thread(
+                    self.client.models.generate_content,
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size="2K" if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
