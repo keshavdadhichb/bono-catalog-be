@@ -1,0 +1,13 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+google-genai==1.0.0
+rembg==2.0.69
+onnxruntime==1.21.0
+Pillow==11.1.0
+reportlab==4.2.5
+aiofiles==24.1.0
+python-dotenv==1.0.1
+httpx==0.28.1
+
+

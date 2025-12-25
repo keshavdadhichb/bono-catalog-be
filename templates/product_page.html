@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        .product-page {
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        /* Minimal Header */
+        .header {
+            padding: 48pt 60pt 0 60pt;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-name {
+            font-size: 14pt;
+            font-weight: 500;
+            letter-spacing: 4pt;
+            text-transform: uppercase;
+            color: #1a1a1a;
+        }
+
+        .logo {
+            height: 32pt;
+            width: auto;
+            opacity: 0.9;
+        }
+
+        /* Main Image Area - Hero Section */
+        .images-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40pt 60pt;
+            gap: 60pt;
+        }
+
+        .image-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 380pt;
+        }
+
+        .model-image {
+            width: 100%;
+            height: auto;
+            max-height: 950pt;
+            object-fit: contain;
+            /* Subtle shadow for depth */
+            filter: drop-shadow(0 4pt 20pt rgba(0, 0, 0, 0.06));
+        }
+
+        .view-label {
+            margin-top: 20pt;
+            font-size: 9pt;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 3pt;
+            color: #999999;
+        }
+
+        /* Minimal Footer */
+        .footer {
+            padding: 0 60pt 48pt 60pt;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 16pt;
+            font-weight: 500;
+            letter-spacing: 1pt;
+            color: #1a1a1a;
+            margin-bottom: 6pt;
+        }
+
+        .product-sku {
+            font-size: 9pt;
+            font-weight: 400;
+            color: #999999;
+            letter-spacing: 2pt;
+        }
+
+        .page-number {
+            font-size: 9pt;
+            font-weight: 300;
+            color: #cccccc;
+            letter-spacing: 1pt;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="product-page">
+        <div class="header">
+            <span class="brand-name">{{ brand_name }}</span>
+            {% if logo_image %}
+            <img src="{{ logo_image }}" alt="Logo" class="logo">
+            {% endif %}
+        </div>
+
+        <div class="images-container">
+            <div class="image-wrapper">
+                <img src="{{ front_image }}" alt="Front View" class="model-image">
+                <span class="view-label">Front</span>
+            </div>
+            <div class="image-wrapper">
+                <img src="{{ back_image }}" alt="Back View" class="model-image">
+                <span class="view-label">Back</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="product-info">
+                <div class="product-name">{{ product_name }}</div>
+                <div class="product-sku">{{ product_sku }}</div>
+            </div>
+            {% if page_number %}
+            <div class="page-number">{{ page_number }}</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>

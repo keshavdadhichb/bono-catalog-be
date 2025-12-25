@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        .intro-page {
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            text-align: center;
+            padding: 100pt;
+        }
+
+        .collection-name {
+            font-size: 36pt;
+            font-weight: 300;
+            letter-spacing: 6pt;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            margin-bottom: 24pt;
+        }
+
+        .season {
+            font-size: 12pt;
+            font-weight: 400;
+            letter-spacing: 4pt;
+            text-transform: uppercase;
+            color: #999999;
+            margin-bottom: 60pt;
+        }
+
+        .divider {
+            width: 60pt;
+            height: 1pt;
+            background: #e0e0e0;
+            margin-bottom: 60pt;
+        }
+
+        .intro-text {
+            font-size: 11pt;
+            font-weight: 300;
+            line-height: 2;
+            color: #666666;
+            max-width: 480pt;
+            letter-spacing: 0.5pt;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="intro-page">
+        <div class="collection-name">{{ collection_name }}</div>
+        {% if season %}
+        <div class="season">{{ season }}</div>
+        {% endif %}
+
+        <div class="divider"></div>
+
+        {% if intro_text %}
+        <div class="intro-text">{{ intro_text }}</div>
+        {% endif %}
+    </div>
+</body>
+
+</html>

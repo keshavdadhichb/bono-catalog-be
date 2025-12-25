@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        .cover-page {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background: #ffffff;
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        /* Full bleed cover image */
+        .cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Overlay for text readability if needed */
+        .cover-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg,
+                    rgba(0, 0, 0, 0) 0%,
+                    rgba(0, 0, 0, 0) 60%,
+                    rgba(0, 0, 0, 0.1) 100%);
+        }
+
+        /* Brand name on cover */
+        .cover-brand {
+            position: absolute;
+            bottom: 80pt;
+            left: 60pt;
+            right: 60pt;
+            text-align: center;
+        }
+
+        .cover-brand-name {
+            font-size: 32pt;
+            font-weight: 300;
+            letter-spacing: 8pt;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 0 2pt 20pt rgba(0, 0, 0, 0.3);
+        }
+
+        .cover-tagline {
+            font-size: 11pt;
+            font-weight: 400;
+            letter-spacing: 4pt;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 16pt;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cover-page">
+        <img src="{{ cover_image }}" alt="{{ brand_name }} Catalog" class="cover-image">
+        <div class="cover-overlay"></div>
+        {% if show_brand_text %}
+        <div class="cover-brand">
+            <div class="cover-brand-name">{{ brand_name }}</div>
+            {% if tagline %}
+            <div class="cover-tagline">{{ tagline }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>
