@@ -175,16 +175,13 @@ OUTPUT: A single photorealistic image of the model wearing the garment."""
 
         garment_pil = self._image_to_pil(garment_image)
         
-        # Use 2K resolution (medium quality)
+        # Use 2K resolution
         response = await asyncio.to_thread(
             self.client.models.generate_content,
             model=self.model,
             contents=[prompt, garment_pil],
             config=types.GenerateContentConfig(
-                response_modalities=['TEXT', 'IMAGE'],
-                image_config=types.ImageConfig(
-                    image_size="medium"  # 2K resolution (2048px)
-                )
+                response_modalities=['TEXT', 'IMAGE']
             )
         )
         
