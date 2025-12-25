@@ -279,8 +279,24 @@ class GeminiClient:
         buffer.seek(0)
         return buffer.getvalue()
     
+    def _validate_image_bytes(self, data: bytes) -> bytes:
+        """Validate that bytes are a valid image, convert if needed"""
+        try:
+            # Try to open as image to validate
+            img = Image.open(BytesIO(data))
+            # Re-save as PNG to ensure correct format
+            buffer = BytesIO()
+            img.save(buffer, format="PNG")
+            buffer.seek(0)
+            return buffer.getvalue()
+        except Exception as e:
+            print(f"Image validation failed: {e}")
+            raise ValueError(f"Invalid image data: {e}")
+    
     def _extract_image_from_response(self, response) -> bytes:
-        """Extract image from Gemini response"""
+        """Extract image from Gemini response with robust fallbacks"""
+        import base64
+        
         parts = None
         if hasattr(response, 'parts') and response.parts:
             parts = response.parts
@@ -292,32 +308,50 @@ class GeminiClient:
             print(f"Response has no parts. Type: {type(response)}")
             if hasattr(response, 'text'):
                 print(f"Response text: {response.text[:500] if response.text else 'None'}")
-            raise ValueError("No parts found in response")
+            raise ValueError("No parts found in response - API may have returned text only")
         
         for part in parts:
+            # Method 1: inline_data.data (raw bytes)
             if hasattr(part, 'inline_data') and part.inline_data is not None:
                 if hasattr(part.inline_data, 'data'):
-                    return part.inline_data.data
+                    data = part.inline_data.data
+                    if data:
+                        print(f"Got inline_data, length: {len(data)}, type: {type(data)}")
+                        # Check if it's base64 encoded string
+                        if isinstance(data, str):
+                            try:
+                                data = base64.b64decode(data)
+                            except:
+                                pass
+                        return self._validate_image_bytes(data)
             
+            # Method 2: as_image() returns PIL Image
             if hasattr(part, 'as_image'):
                 try:
                     img = part.as_image()
                     if img:
-                        if hasattr(img, 'save'):
-                            buffer = BytesIO()
-                            try:
-                                img.save(buffer, "PNG")
-                            except TypeError:
-                                img.save(buffer, format="PNG")
-                            buffer.seek(0)
-                            return buffer.getvalue()
-                        elif hasattr(img, 'image_bytes'):
-                            return img.image_bytes
-                        elif hasattr(img, '_image_bytes'):
-                            return img._image_bytes
+                        print(f"Got as_image, type: {type(img)}")
+                        buffer = BytesIO()
+                        # Try positional arg first (Google's Image object)
+                        try:
+                            img.save(buffer, "PNG")
+                        except TypeError:
+                            # Fall back to keyword arg (PIL Image)
+                            img.save(buffer, format="PNG")
+                        buffer.seek(0)
+                        return buffer.getvalue()
                 except Exception as e:
-                    print(f"Error extracting image: {e}")
+                    print(f"as_image() failed: {e}")
             
+            # Method 3: Check for image_bytes attribute
+            for attr in ['image_bytes', '_image_bytes', 'data']:
+                if hasattr(part, attr):
+                    data = getattr(part, attr)
+                    if data and isinstance(data, (bytes, bytearray)):
+                        print(f"Got {attr}, length: {len(data)}")
+                        return self._validate_image_bytes(data)
+            
+            # Log text parts
             if hasattr(part, 'text') and part.text:
                 print(f"Got text part: {part.text[:200]}...")
         
