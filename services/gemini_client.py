@@ -305,7 +305,11 @@ The model is wearing the t-shirt/garment provided in the first reference image.
 - Fit should be relaxed but well-fitted
 
 --- BRANDING & TYPOGRAPHY ---
-{f'''1. LOGO: Place the provided brand logo (second reference image) prominently at the TOP CENTER or TOP RIGHT of the image. It must be crisp and clearly visible.''' if logo_image else '1. LOGO: Add a subtle brand watermark in the corner.'}
+{f'''1. BRAND LOGO: Place the provided logo (second reference image) SMALL in the TOP RIGHT CORNER of the poster.
+   - Size: Small, subtle, approximately 5-8% of image width
+   - Position: Top right corner with padding
+   - DO NOT place the logo ON the t-shirt or garment
+   - The logo is for branding the poster, not the clothing''' if logo_image else '1. LOGO: Add a subtle small brand watermark in the top right corner.'}
 {f'''2. HEADLINE: Render the text "{headline_text}" in a massive, bold, modern sans-serif font.
    - Placement: Lower third of the image or creatively behind/around the model
    - Style: Clean, impactful, commercial advertising style''' if headline_text else ''}
