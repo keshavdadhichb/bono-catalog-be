@@ -485,71 +485,103 @@ Output: Single photorealistic image of the model wearing this exact garment."""
         text_instructions = self._build_text_instructions(layout_style, text_content)
         layout_prompt = self._get_layout_prompt(layout_style)
         
-        prompt = f"""You are a world-class Fashion Art Director and Commercial Photographer.
-Generate a STUNNING HIGH-RESOLUTION MARKETING POSTER / ADVERTISEMENT.
+        prompt = f"""You are a world-class Fashion Commercial Photographer creating a marketing poster.
 
-=== ⛔ ZERO-TOLERANCE GARMENT RULES - READ CAREFULLY ⛔ ===
-🚫 ABSOLUTELY DO NOT ADD ANY TEXT, LOGOS, GRAPHICS OR PRINTS TO THE GARMENT
-🚫 The garment in the reference image is the ONLY source of truth
-🚫 If the reference garment is PLAIN/SOLID COLOR - the output garment MUST be PLAIN/SOLID
-🚫 DO NOT invent, add, or imagine any text like "SQUAD", "STYLE", or any words on the t-shirt
-🚫 DO NOT add any graphic, icon, emblem, or design element to the garment
-🚫 The ONLY acceptable modification is natural fabric draping and lighting
-🚫 VIOLATION OF THIS RULE RUINS THE ENTIRE OUTPUT
+╔══════════════════════════════════════════════════════════════════╗
+║  🎯 PRIORITY 1: GARMENT PRESERVATION (HIGHEST PRIORITY)          ║
+╚══════════════════════════════════════════════════════════════════╝
 
-If the t-shirt in the reference is plain cream/beige - it MUST remain plain cream/beige with ZERO additions.
+STUDY THE REFERENCE GARMENT IMAGE CAREFULLY BEFORE GENERATING.
 
-=== LAYOUT STRUCTURE ===
+✅ YOU MUST:
+- Reproduce the EXACT garment from the reference image
+- Keep the SAME color (if beige/cream, it stays beige/cream)
+- Keep the SAME texture (cotton, smooth, ribbed, etc.)
+- Keep the SAME fit (loose, fitted, oversized, etc.)
+- Allow ONLY natural fabric behavior: draping, wrinkles, folds
+
+❌ YOU MUST NOT (CRITICAL - ZERO TOLERANCE):
+- ADD any text to the garment (no "SQUAD", "STYLE", "NYC", etc.)
+- ADD any logo, emblem, or brand mark to the garment
+- ADD any graphic, print, or design element to the garment
+- CHANGE the garment color or material
+- INVENT or IMAGINE any design that wasn't in the reference
+- If reference shows PLAIN/SOLID garment → output MUST be PLAIN/SOLID
+
+⚠️ CHECKPOINT: Before generating, confirm the reference garment is plain.
+   If plain → NO text, NO graphics. If printed → reproduce EXACTLY.
+
+╔══════════════════════════════════════════════════════════════════╗
+║  🎯 PRIORITY 2: COMPOSITION & LAYOUT                              ║
+╚══════════════════════════════════════════════════════════════════╝
+
 {layout_prompt}
 
-=== TYPOGRAPHY & TEXT (POSTER TEXT ONLY - NOT ON GARMENT) ===
+OUTPUT FORMAT:
+- Aspect Ratio: 9:16 vertical (poster format)
+- Resolution: 4K quality, print-ready
+- Single cohesive image (no collage, no split frames)
+
+╔══════════════════════════════════════════════════════════════════╗
+║  🎯 PRIORITY 3: TYPOGRAPHY (POSTER TEXT ONLY)                     ║
+╚══════════════════════════════════════════════════════════════════╝
+
 {text_instructions}
 
-⚠️ TYPOGRAPHY STYLE REQUIREMENTS:
-1. ALL text MUST be OVERLAID directly on the image - NEVER in a separate section
-2. Use SUBTLE, MUTED, ELEGANT color palette for text:
-   - Soft whites, creams, warm grays
-   - Muted earth tones (taupe, soft brown, dusty rose)
-   - NO bright orange, NO neon, NO poppy colors
-   - Colors should HARMONIZE with the image, not scream for attention
-3. Use refined SERIF or thin SANS-SERIF fonts:
-   - Elegant: Cormorant Garamond, Libre Baskerville, Playfair Display
-   - Clean: Montserrat Light/Thin, Raleway, Jost
-   - NO chunky, NO bold condensed, NO Impact-style fonts
-4. Typography should feel LUXURIOUS and UNDERSTATED
-5. Text should WHISPER elegance, not SHOUT for attention
-6. Letter-spacing should be generous and refined
-7. Think: Vogue, Harpers Bazaar, minimalist luxury brands
+✅ TYPOGRAPHY RULES:
+- ALL text is OVERLAID on the image (NOT in a separate section below)
+- Use MUTED, ELEGANT colors: soft white, cream, warm gray, taupe
+- Use REFINED fonts: Cormorant Garamond, Playfair Display, Montserrat Light
+- Text should feel UNDERSTATED and LUXURIOUS
+- Think: Vogue, Harper's Bazaar, minimalist luxury
 
-=== THE MODEL ===
-Subject: {config['description']}, {config['age_range']}
-Skin: {skin_desc}
-Build: {build}
-Pose: {pose_desc}
-Camera Angle: {angle_desc}
-Props: {prop_desc}
+❌ TYPOGRAPHY DON'T:
+- NO bright/neon colors (no orange, no red, no pink)
+- NO chunky/bold/impact fonts
+- NO separate white text box below the image
+- NO text ON the garment itself
 
-=== ENVIRONMENT ===
-Background: {theme['background_desc']}
-Lighting: {theme['lighting']}
-Mood: {theme['mood']}
-{theme['camera']}
+╔══════════════════════════════════════════════════════════════════╗
+║  🎯 PRIORITY 4: MODEL & ENVIRONMENT                               ║
+╚══════════════════════════════════════════════════════════════════╝
 
-=== THE GARMENT ===
-The model wears the garment from the reference image.
-REPRODUCE THE GARMENT EXACTLY:
-- Same colors, same patterns, same graphics
-- If it has text/logo, reproduce exactly
-- If it's plain, keep it plain
-- Natural draping and realistic wrinkles
+THE MODEL:
+- Description: {config['description']}, {config['age_range']}
+- Skin Tone: {skin_desc}
+- Body Type: {build}
+- Pose: {pose_desc}
+- Camera Angle: {angle_desc}
+- Props: {prop_desc}
 
-=== TECHNICAL SPECS ===
-- Resolution: 2K, print-ready
-- Aspect ratio: 9:16 vertical (social media poster format)
-- Sharp focus on model and text
-- Rich, vibrant colors
+THE ENVIRONMENT:
+- Background: {theme['background_desc']}
+- Lighting: {theme['lighting']}
+- Mood: {theme['mood']}
+- Camera Style: {theme['camera']}
 
-Generate a complete professional marketing poster."""
+✅ MODEL CONSISTENCY:
+- Generate a realistic human model matching the description
+- Natural skin texture, realistic proportions
+- Model should look like a professional fashion model
+
+❌ MODEL DON'T:
+- NO distorted faces or hands
+- NO unnatural body proportions
+- NO floating limbs
+
+╔══════════════════════════════════════════════════════════════════╗
+║  📋 FINAL VALIDATION CHECKLIST                                    ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Before outputting, verify:
+□ Garment matches reference EXACTLY (no added text/graphics)
+□ Layout follows the specified structure
+□ Text is overlaid on image, NOT in separate section
+□ Typography is muted and elegant
+□ Model looks natural and realistic
+□ Aspect ratio is 9:16 vertical
+
+Generate the professional fashion marketing poster now."""
 
         garment_pil = self._image_to_pil(garment_image)
         
@@ -591,23 +623,29 @@ Generate a complete professional marketing poster."""
     def _get_layout_prompt(self, layout_style: str) -> str:
         """Get detailed layout instructions for each style - ALL text overlaid on image"""
         
-        # Common premium typography guidance - SUBTLE & ELEGANT
+        # Common premium typography guidance - ANTI-HALLUCINATION RULES
         typography_base = """
-🚫 GARMENT RULE: DO NOT ADD ANY TEXT/LOGOS TO THE GARMENT - Keep garment EXACTLY as reference
+╔═══════════════════════════════════════════╗
+║  ⛔ GARMENT PRESERVATION (CRITICAL)        ║
+╚═══════════════════════════════════════════╝
+❌ DO NOT add text, logos, or graphics to the GARMENT
+❌ If garment is PLAIN → keep it PLAIN
+✅ Keep garment EXACTLY as shown in reference image
 
-TYPOGRAPHY REQUIREMENTS:
-⚠️ ALL TEXT MUST BE OVERLAID ON THE IMAGE - NOT in a separate section below
-⚠️ Use SUBTLE, MUTED COLORS for text:
-   - Soft whites, creams, warm grays, off-whites
-   - Muted earth tones (taupe, soft brown, dusty rose, sage)
-   - NO bright orange, NO neon, NO poppy/saturated colors
-⚠️ Use ELEGANT, REFINED fonts:
-   - Serif: Cormorant Garamond, Playfair Display, Libre Baskerville
-   - Sans: Montserrat Light/Thin, Raleway, Jost
-   - NO chunky bold fonts, NO Impact-style fonts
-⚠️ Typography should WHISPER elegance, not SHOUT
-⚠️ The image must be ONE COHESIVE COMPOSITION
-⚠️ Think: Vogue, minimalist luxury aesthetic
+╔═══════════════════════════════════════════╗
+║  📝 TYPOGRAPHY RULES                       ║
+╚═══════════════════════════════════════════╝
+✅ DO:
+- Overlay text DIRECTLY on the image
+- Use MUTED colors (cream, white, gray, taupe)
+- Use ELEGANT fonts (Cormorant, Playfair, Montserrat Light)
+- Create ONE cohesive composition
+
+❌ DON'T:
+- Create separate text section below image
+- Use bright/neon/poppy colors
+- Use chunky bold fonts
+- Put ANY text on the garment itself
 """
         
         layouts = {
