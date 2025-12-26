@@ -271,8 +271,49 @@ class GeminiClient:
         self.client = genai.Client(api_key=self.api_key)
         self.model = self.PRIMARY_MODEL
     
+    # Timeout for API calls (2 minutes per image)
+    API_TIMEOUT = 120
+    
+    async def _generate_with_timeout(self, model, contents, config):
+        """Wrapper to add timeout to generation calls"""
+        try:
+            return await asyncio.wait_for(
+                asyncio.to_thread(
+                    self.client.models.generate_content,
+                    model=model,
+                    contents=contents,
+                    config=config
+                ),
+                timeout=self.API_TIMEOUT
+            )
+        except asyncio.TimeoutError:
+            raise TimeoutError(f"Image generation timed out after {self.API_TIMEOUT} seconds")
+    
     def _image_to_pil(self, image_bytes: bytes) -> Image.Image:
-        return Image.open(BytesIO(image_bytes))
+        """Convert image bytes to PIL Image with robust error handling"""
+        if not image_bytes:
+            raise ValueError("Empty image data received")
+        
+        if len(image_bytes) < 100:
+            raise ValueError(f"Image data too small ({len(image_bytes)} bytes) - likely corrupted upload")
+        
+        try:
+            img = Image.open(BytesIO(image_bytes))
+            # Force load to detect corrupt images early
+            img.load()
+            # Convert to RGB if needed (handles RGBA, P mode, etc)
+            if img.mode not in ('RGB', 'L'):
+                img = img.convert('RGB')
+            return img
+        except Exception as e:
+            # Try to detect file type for better error message
+            header = image_bytes[:20]
+            if header.startswith(b'<!DOCTYPE') or header.startswith(b'<html'):
+                raise ValueError("Received HTML instead of image - check your upload")
+            elif header.startswith(b'{') or header.startswith(b'['):
+                raise ValueError("Received JSON instead of image - check your upload")
+            else:
+                raise ValueError(f"Invalid image format: {str(e)[:100]}")
     
     def _pil_to_bytes(self, image: Image.Image, format: str = "PNG") -> bytes:
         """Convert PIL Image to bytes with MAXIMUM quality"""
@@ -428,8 +469,7 @@ Output: Single photorealistic image of the model wearing this exact garment."""
             try:
                 print(f"Attempting photo generation with {model_to_use} (attempt {attempt + 1})")
                 
-                response = await asyncio.to_thread(
-                    self.client.models.generate_content,
+                response = await self._generate_with_timeout(
                     model=model_to_use,
                     contents=[prompt, garment_pil],
                     config=types.GenerateContentConfig(
@@ -599,8 +639,7 @@ Generate the professional fashion marketing poster now."""
             try:
                 print(f"Generating poster with {model_to_use} (attempt {attempt + 1})")
                 
-                response = await asyncio.to_thread(
-                    self.client.models.generate_content,
+                response = await self._generate_with_timeout(
                     model=model_to_use,
                     contents=contents,
                     config=types.GenerateContentConfig(
