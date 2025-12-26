@@ -271,7 +271,8 @@ async def generate_and_download(
                     body_type=body_type,
                     shot_angle=shot_angle,
                     pose_type=pose_type,
-                    creative_direction=creative_direction
+                    creative_direction=creative_direction,
+                    image_quality=image_quality
                 )
                 
                 back_model = await gemini.generate_model_image(
@@ -283,7 +284,8 @@ async def generate_and_download(
                     body_type=body_type,
                     shot_angle=shot_angle,
                     pose_type=pose_type,
-                    creative_direction=creative_direction
+                    creative_direction=creative_direction,
+                    image_quality=image_quality
                 )
                 
                 generated_images.append((f"product_{product_num}_front.png", front_model))

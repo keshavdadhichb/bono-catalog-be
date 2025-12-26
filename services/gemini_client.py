@@ -376,9 +376,10 @@ class GeminiClient:
         body_type: str = "",
         shot_angle: str = "front_facing",
         pose_type: str = "catalog_standard",
-        creative_direction: str = ""
+        creative_direction: str = "",
+        image_quality: str = "4K"  # Options: "1K", "2K", "4K"
     ) -> bytes:
-        """Generate a simple virtual try-on photo (2K resolution)"""
+        """Generate a simple virtual try-on photo"""
         
         config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
         skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
@@ -435,7 +436,7 @@ Output: Single photorealistic image of the model wearing this exact garment."""
                         response_modalities=["IMAGE"],
                         image_config=types.ImageConfig(
                             aspect_ratio="3:4",
-                            image_size="4K" if model_to_use == self.PRIMARY_MODEL else None
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
                         )
                     )
                 )
