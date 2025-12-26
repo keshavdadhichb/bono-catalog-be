@@ -101,6 +101,30 @@ LAYOUT_CONFIGS = {
         "description": "Editorial lookbook with multiple elements",
         "text_fields": ["brand", "headline", "subtext", "price"],
         "preview": "Rich editorial with all text elements"
+    },
+    "orange_diagonal": {
+        "name": "Orange Diagonal",
+        "description": "BONO style - split background with diagonal banner",
+        "text_fields": ["brand", "headline", "subtext", "tagline"],
+        "preview": "White/orange split with dynamic diagonal element"
+    },
+    "yellow_vibrant": {
+        "name": "Yellow Vibrant",
+        "description": "Modern pop - bright yellow with purple accents",
+        "text_fields": ["headline", "subtext", "brand"],
+        "preview": "Bold yellow background with geometric purple elements"
+    },
+    "pink_elegant": {
+        "name": "Pink Elegant",
+        "description": "Runway style - soft pink with elegant typography",
+        "text_fields": ["headline", "subtext", "brand"],
+        "preview": "Blush pink with flowing script and vertical text bars"
+    },
+    "orange_framed": {
+        "name": "Orange Framed",
+        "description": "Premium frame - deep orange with white frame",
+        "text_fields": ["headline", "tagline", "brand"],
+        "preview": "Deep orange with decorative white frame and layered text"
     }
 }
 

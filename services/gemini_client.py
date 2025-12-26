@@ -747,6 +747,85 @@ LOOKBOOK SPREAD LAYOUT:
 - Price and details as elegant overlays
 - Fashion lookbook aesthetic - all text integrates with image
 - Typography: Mix of display and body fonts, editorial hierarchy
+""",
+            "orange_diagonal": f"""
+{typography_base}
+
+ORANGE DIAGONAL BANNER LAYOUT (BONO Style):
+- Split background: TOP half is clean white, BOTTOM half and borders are warm orange (#E67E22)
+- Model placed CENTER, standing against the white portion
+- Abstract black line art: circular and wavy shapes behind the model
+- LARGE ORANGE DIAGONAL BANNER with white outline cuts across lower half of poster
+- Text placements:
+  * TOP: "BONO" in orange sans-serif font
+  * Below: "Lifestyle" in smaller orange serif font
+  * Website "bonostyle.in" in top right corner
+  * Below diagonal banner: brand tagline in small black font
+  * Large "01." numbering element
+  * Row of social media icons (optional)
+  * Vertical "B O N O" text element on right side with orange star shapes
+- Typography: Mix of bold sans-serif and elegant serif, all in orange or black
+- Feel: Modern, geometric, lifestyle brand aesthetic
+
+🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
+""",
+            "yellow_vibrant": f"""
+{typography_base}
+
+YELLOW VIBRANT CATALOG LAYOUT (Modern Pop):
+- Solid BRIGHT YELLOW background (#F1C40F)
+- Model placed centrally in the composition (front or back view)
+- Large PURPLE outline sans-serif text spelling "FASHION" at top
+- Additional outline text partial letters on left side
+- White horizontal banner with purple border in lower area containing:
+  * Collection name in yellow text
+  * Year in purple text
+- Geometric elements scattered:
+  * Purple dots arranged in grids
+  * Thin purple horizontal and vertical lines
+  * Purple rectangular outlines
+- Vertical text "bonostyle.in" on right side
+- Bottom text elements in large white outline font
+- Typography: Bold sans-serif, purple and white colors
+
+🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
+""",
+            "pink_elegant": f"""
+{typography_base}
+
+PINK ELEGANT FASHION SHOW LAYOUT (Runway Style):
+- Soft, light PINK background (#FADBD8 or similar blush pink)
+- Model positioned in lower center area
+- Text hierarchy:
+  * TOP: Large, bold, orange sans-serif text with collection/brand name
+  * Below: Flowing orange script font saying "Fashion Collection" or similar
+  * LEFT vertical bar: Date or event info in orange sans-serif
+  * RIGHT vertical bar: Location or "BONO" in orange sans-serif
+  * Each vertical text bar has thin orange vertical line accent
+- Overall feel: Clean, modern, editorial, high-fashion
+- Lots of breathing space, elegant minimalism
+- Typography: Bold sans-serif headers, flowing script accents, all in warm orange tones
+
+🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
+""",
+            "orange_framed": f"""
+{typography_base}
+
+ORANGE FRAMED CATALOG LAYOUT (Premium Frame):
+- Solid DEEP ORANGE background (#D35400)
+- Large WHITE rectangular frame with decorative corner accents encloses main content
+- Model placed inside the frame
+- Behind model: The word "FASHION" or "BONO" repeated 3 times in large white bold text
+  * Some letters outlined, some solid, creating layered depth effect
+- Pattern of small white dots in grid on left side
+- Text within frame:
+  * Bottom left: White quote icon + tagline "BE READY" or brand message
+  * Placeholder text below in white font
+  * Top right: Date and collection number in small accent color
+- Small white plus signs and dot patterns scattered on orange background outside frame
+- Typography: Bold condensed sans-serif, white with occasional red/cream accents
+
+🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
 """
         }
         
