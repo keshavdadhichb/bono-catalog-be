@@ -435,7 +435,7 @@ Output: Single photorealistic image of the model wearing this exact garment."""
                         response_modalities=["IMAGE"],
                         image_config=types.ImageConfig(
                             aspect_ratio="3:4",
-                            image_size="2K" if model_to_use == self.PRIMARY_MODEL else None
+                            image_size="4K" if model_to_use == self.PRIMARY_MODEL else None
                         )
                     )
                 )
@@ -573,7 +573,7 @@ Generate a complete professional marketing poster."""
                         response_modalities=["IMAGE"],
                         image_config=types.ImageConfig(
                             aspect_ratio="9:16",
-                            image_size="2K" if model_to_use == self.PRIMARY_MODEL else None
+                            image_size="4K" if model_to_use == self.PRIMARY_MODEL else None
                         )
                     )
                 )
@@ -866,7 +866,7 @@ Generate an elegant catalog cover page."""
                         response_modalities=["IMAGE"],
                         image_config=types.ImageConfig(
                             aspect_ratio="9:16",
-                            image_size="2K" if model_to_use == self.PRIMARY_MODEL else None
+                            image_size="4K" if model_to_use == self.PRIMARY_MODEL else None
                         )
                     )
                 )
@@ -962,7 +962,7 @@ Generate a beautiful catalog closing page."""
                         response_modalities=["IMAGE"],
                         image_config=types.ImageConfig(
                             aspect_ratio="9:16",
-                            image_size="2K" if model_to_use == self.PRIMARY_MODEL else None
+                            image_size="4K" if model_to_use == self.PRIMARY_MODEL else None
                         )
                     )
                 )
