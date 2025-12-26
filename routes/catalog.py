@@ -188,6 +188,7 @@ async def generate_and_download(
     marketing_theme: str = Form("studio_minimal"),
     prop: str = Form("none"),
     layout_style: str = Form("hero_bottom"),
+    image_quality: str = Form("4K"),  # Options: "1K", "2K", "4K"
     
     # Text fields for poster (Gemini renders these directly)
     headline: str = Form(""),
@@ -254,7 +255,8 @@ async def generate_and_download(
                     pose_type=pose_type,
                     shot_angle=shot_angle,
                     layout_style=layout_style,
-                    text_content=text_content
+                    text_content=text_content,
+                    image_quality=image_quality
                 )
                 
                 generated_images.append((f"product_{product_num}_poster.png", poster))

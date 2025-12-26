@@ -466,7 +466,8 @@ Output: Single photorealistic image of the model wearing this exact garment."""
         pose_type: str = "catalog_standard",
         shot_angle: str = "front_facing",
         layout_style: str = "hero_bottom",
-        text_content: dict = None
+        text_content: dict = None,
+        image_quality: str = "4K"  # Options: "1K", "2K", "4K"
     ) -> bytes:
         """Generate marketing poster with layout-specific text rendering"""
         
@@ -605,7 +606,7 @@ Generate the professional fashion marketing poster now."""
                         response_modalities=["IMAGE"],
                         image_config=types.ImageConfig(
                             aspect_ratio="9:16",
-                            image_size="4K" if model_to_use == self.PRIMARY_MODEL else None
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
                         )
                     )
                 )
