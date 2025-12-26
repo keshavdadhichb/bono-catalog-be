@@ -125,6 +125,36 @@ LAYOUT_CONFIGS = {
         "description": "Premium frame - deep orange with white frame",
         "text_fields": ["headline", "tagline", "brand"],
         "preview": "Deep orange with decorative white frame and layered text"
+    },
+    "minimalist_editorial": {
+        "name": "Minimalist Editorial",
+        "description": "High-end magazine spread with white space",
+        "text_fields": ["headline", "subtext"],
+        "preview": "Off-white background, thin serif typography, vertical divider"
+    },
+    "urban_brutalist": {
+        "name": "Urban Brutalist",
+        "description": "Edgy streetwear with concrete texture",
+        "text_fields": ["headline", "subtext"],
+        "preview": "Concrete background, distressed text, technical overlays"
+    },
+    "warm_earth": {
+        "name": "Warm Earth Tones",
+        "description": "Organic natural feel with earth colors",
+        "text_fields": ["headline", "subtext", "tagline"],
+        "preview": "Terracotta, sage, sand collage with botanical elements"
+    },
+    "dark_luxury": {
+        "name": "Dark Mode Luxury",
+        "description": "Premium dark with gold accents",
+        "text_fields": ["headline", "subtext"],
+        "preview": "Charcoal background with metallic gold typography"
+    },
+    "dynamic_typography": {
+        "name": "Dynamic Typography",
+        "description": "Text as major visual element",
+        "text_fields": ["headline", "subtext"],
+        "preview": "Large translucent text overlay, energetic modern feel"
     }
 }
 

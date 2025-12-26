@@ -826,6 +826,94 @@ ORANGE FRAMED CATALOG LAYOUT (Premium Frame):
 - Typography: Bold condensed sans-serif, white with occasional red/cream accents
 
 🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
+""",
+            "minimalist_editorial": f"""
+{typography_base}
+
+MINIMALIST EDITORIAL LAYOUT (High-End Magazine):
+- Background: Clean off-white textured art paper (#F8F6F3)
+- Model placed on RIGHT side of frame, back view
+- LEFT side has elegant text block:
+  * Large title in thin classic serif font (like Cormorant): "THE BACK PRINT STATEMENT" or collection headline
+  * Below: Smaller clean sans-serif paragraph of description/placeholder text
+  * A thin vertical black line separates text block from model
+- Bottom left: Small caps text "COLLECTION 24 / LOOK 03" or similar
+- Overall feel: Airy, premium, uncluttered, lots of white space
+- Typography: Thin serif headlines, clean sans-serif body
+- Color palette: Off-white, black, minimal accents
+
+🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
+""",
+            "urban_brutalist": f"""
+{typography_base}
+
+URBAN BRUTALIST LAYOUT (Streetwear/Industrial):
+- Background: Textured light gray concrete wall texture (#A0A0A0)
+- Model positioned CENTRALLY, back view
+- Behind model: Large DISTRESSED bold black sans-serif text "URBAN LEGEND" (partially obscured/weathered)
+- Technical overlay elements:
+  * Thin black grid lines across composition
+  * Small crosshair target symbols
+  * Rectangular data box (top right) with monospaced text: "SPEC: HVY COTTON / GFX: BEAR / ID: 4920"
+- Bottom: Large bold condensed font "STREETWEAR"
+- Color palette: STRICTLY monochrome (black, white, grays) - the product should POP as the only color
+- Feel: Edgy, industrial, technical, modern streetwear
+
+🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
+""",
+            "warm_earth": f"""
+{typography_base}
+
+WARM EARTH TONES LAYOUT (Organic/Natural):
+- Background: Composed collage of overlapping soft-edged abstract shapes in warm earth tones:
+  * Muted terracotta (#C68B77)
+  * Sage green (#9CAF88)
+  * Sand beige (#D4C4B0)
+  * Dusty rose (#D4A5A5)
+- Model placed slightly LEFT, back view
+- RIGHT side: Flowing elegant serif headline "Natural Comfort" or similar
+- Subtle line-art botanical illustrations (leaves, abstract branches) in dark brown integrated into background
+- Bottom right: Small text block "Sustainable Essentials" or brand tagline
+- Lighting: Soft and warm, sun-drenched feel
+- Typography: Elegant flowing serif for headlines
+- Feel: Organic, inviting, natural, warm
+
+🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
+""",
+            "dark_luxury": f"""
+{typography_base}
+
+DARK MODE LUXURY LAYOUT (Premium/Dramatic):
+- Background: Deep rich charcoal grey (#2C2C2C) with subtle smooth gradient lighting highlighting center
+- Model positioned CENTER, back view
+- The beige/cream garment should CONTRAST sharply with dark background
+- Typography in METALLIC GOLD (#D4AF37):
+  * Above model: Title "PREMIUM GRAPHICS" in reflective gold sans-serif
+  * Below model: Thin gold horizontal line
+  * Below line: Quote in smaller gold serif: "Details that define the look."
+- Entire layout framed by thin gold border at page edge
+- Feel: Luxurious, dramatic, high-contrast, premium
+- Typography: Gold metallic effect on all text
+
+🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
+""",
+            "dynamic_typography": f"""
+{typography_base}
+
+DYNAMIC TYPOGRAPHY OVERLAY LAYOUT (Modern/Energetic):
+- Background: Clean white
+- Model on RIGHT side, back view
+- LEFT side dominating: HUGE translucent layered sans-serif text in light gray
+  * Text reads "ORIGINAL DESIGN" arranged VERTICALLY
+  * Should partially overlap model's left shoulder
+- Top left corner: Bold black rectangular title block "THE NEW STANDARD"
+- Accent color: Bright orange (#E67E22)
+  * Small solid orange circle graphic in bottom left
+  * Small text "Vol. 05" near title in orange
+- Typography: Strong visual hierarchy, text as major design element
+- Feel: Energetic, modern, design-heavy, bold
+
+🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
 """
         }
         
