@@ -428,39 +428,63 @@ class GeminiClient:
         pose_desc = POSE_TYPES.get(pose_type, POSE_TYPES["catalog_standard"])
         build = body_type if body_type else config["default_build"]
         
-        prompt = f"""Generate a PHOTOREALISTIC high-resolution fashion catalog photograph.
-Shot on professional medium format camera with 85mm f/1.8 lens. Exceptional sharpness and detail.
+        prompt = f"""
+╔════════════════════════════════════════════════════════════════════════╗
+║  ⛔⛔⛔ ABSOLUTE CRITICAL RULE - GARMENT MUST BE PIXEL-PERFECT ⛔⛔⛔  ║
+╚════════════════════════════════════════════════════════════════════════╝
 
-=== MODEL ===
-Subject: {config['description']}, {config['age_range']}
-Skin: {skin_desc}
-Hair: {hair_type}, professionally styled, well-groomed
-Build: {build}
-Expression: Natural, confident, pleasant - professional model expression
+STUDY THE REFERENCE GARMENT IMAGE VERY CAREFULLY BEFORE GENERATING.
 
-=== CAMERA & COMPOSITION ===
-View: {view} view of the model
-Camera Angle: {angle_desc}
-Pose: {pose_desc}
-Framing: Full body shot, complete head to toe visible with small margin
-Background: Pure white (#FFFFFF) seamless studio backdrop, no shadows on background
+The garment in the reference image is a REAL PRODUCT being sold.
+ANY modification to the garment makes the output WORTHLESS and UNUSABLE.
 
-=== THE GARMENT (CRITICAL) ===
-The model MUST wear EXACTLY this garment from the reference image:
-- Preserve 100% of graphic prints, logos, text, patterns - NO modifications
-- Exact color reproduction - match reference perfectly
-- Natural fabric draping based on pose and body position
-- Realistic wrinkles and folds
+🚫 FORBIDDEN - DO NOT DO ANY OF THESE:
+- DO NOT change, modify, or reinterpret ANY logo on the garment
+- DO NOT alter ANY emblem, badge, or brand mark on the garment
+- DO NOT change the position of ANY design element
+- DO NOT modify ANY text, letters, or numbers on the garment
+- DO NOT change ANY graphic, print, or pattern
+- DO NOT change the COLOR of anything on the garment
+- DO NOT add ANY new elements that aren't in the reference
+- DO NOT remove ANY elements that are in the reference
+- DO NOT "improve" or "enhance" any design - COPY EXACTLY
 
-=== PROFESSIONAL PHOTOGRAPHY ===
-- Lighting: Soft diffused beauty lighting, subtle rim light, no harsh shadows
-- Quality: Ultra-sharp focus throughout, professional fashion photography
-- Style: Premium catalog aesthetic (Zara, H&M, COS quality)
-- Realism: Indistinguishable from real professional photoshoot
+✅ REQUIRED - YOU MUST:
+- Copy the EXACT logo pixel-for-pixel as shown in reference
+- Copy the EXACT position of all design elements
+- Copy the EXACT colors (gray is gray, yellow is yellow, etc.)
+- Copy the EXACT shape and size of all graphics
+- The garment on the model MUST look IDENTICAL to the reference
 
-{f"ADDITIONAL DIRECTION: {creative_direction}" if creative_direction else ""}
+If the reference shows a small yellow logo on the left chest → output MUST have the SAME small yellow logo in the SAME position with the SAME design.
 
-Output: Single photorealistic image of the model wearing this exact garment."""
+═══════════════════════════════════════════════════════════════════════════
+
+Now generate a professional catalog photo:
+
+MODEL:
+- Subject: {config['description']}, {config['age_range']}
+- Skin: {skin_desc}
+- Hair: {hair_type}
+- Build: {build}
+- Expression: Natural, confident
+
+CAMERA:
+- View: {view} view
+- Angle: {angle_desc}
+- Pose: {pose_desc}
+- Framing: Full body, head to toe
+- Background: Pure white (#FFFFFF) seamless studio
+
+PHOTOGRAPHY:
+- Lighting: Soft diffused beauty lighting
+- Quality: Ultra-sharp, professional fashion photography
+- Style: Premium catalog (Zara, H&M quality)
+
+{f"DIRECTION: {creative_direction}" if creative_direction else ""}
+
+⚠️ FINAL CHECK: Before outputting, verify the garment logo/design matches EXACTLY.
+Output: Photorealistic image with the EXACT SAME garment from reference."""
 
         garment_pil = self._image_to_pil(garment_image)
         
