@@ -14,7 +14,7 @@ from enum import Enum
 
 from services.gemini_client import GeminiClient
 from services.image_processor import ImageProcessor
-from services.upscaler import upscale_2k_to_4k
+from services.upscaler import upscale_to_target
 
 
 router = APIRouter()
@@ -505,14 +505,29 @@ async def generate_master_catalog(
     
     num_products = len(front_images)
     
-    # COST OPTIMIZATION: Generate at 2K, upscale to 4K if needed
-    # This saves ~50% on generation costs
-    output_quality = image_quality  # What user requested
-    internal_quality = "2K" if image_quality == "4K" else image_quality  # What we generate at
-    should_upscale = (image_quality == "4K")
+    # Parse quality selection - 5 options:
+    # 1K          = Generate at 1K, no upscale
+    # 2K          = Generate at 2K pure, no upscale
+    # 4K          = Generate at 4K pure, no upscale
+    # 2K_UPSCALE  = Generate at 2K, upscale to 4K
+    # 4K_UPSCALE  = Generate at 4K, upscale to 8K
+    
+    if image_quality == "2K_UPSCALE":
+        internal_quality = "2K"
+        should_upscale = True
+        upscale_target = "4K"
+    elif image_quality == "4K_UPSCALE":
+        internal_quality = "4K"
+        should_upscale = True
+        upscale_target = "8K"
+    else:
+        # Pure modes: 1K, 2K, 4K - use directly, no upscale
+        internal_quality = image_quality
+        should_upscale = False
+        upscale_target = None
     
     print(f"📊 Catalog: {num_products} products, theme: {theme}")
-    print(f"💰 Cost optimization: Generate at {internal_quality}, output at {output_quality} (upscale: {should_upscale})")
+    print(f"🎨 Quality: {image_quality} (generate: {internal_quality}, upscale: {should_upscale})")
     
     try:
         gemini = GeminiClient()
@@ -643,19 +658,19 @@ async def generate_master_catalog(
         
         print(f"Generated {len(generated_images)} images")
         
-        # ========== 4. UPSCALE TO 4K IF NEEDED ==========
+        # ========== 4. UPSCALE IF NEEDED ==========
         if should_upscale:
-            print("📐 Upscaling images from 2K to 4K...")
+            print(f"📐 Upscaling images to {upscale_target}...")
             upscaled_images = []
             for filename, image_bytes in generated_images:
                 try:
-                    upscaled = upscale_2k_to_4k(image_bytes)
+                    upscaled = upscale_to_target(image_bytes, upscale_target)
                     upscaled_images.append((filename, upscaled))
                 except Exception as upscale_error:
                     print(f"⚠️ Upscale failed for {filename}: {upscale_error}")
                     upscaled_images.append((filename, image_bytes))  # Use original
             generated_images = upscaled_images
-            print(f"✅ Upscaled {len(generated_images)} images to 4K")
+            print(f"✅ Upscaled {len(generated_images)} images to {upscale_target}")
         
         print("Creating ZIP and PDF...")
         

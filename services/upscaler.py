@@ -78,9 +78,39 @@ def upscale_2k_to_4k(image_bytes: bytes) -> bytes:
     )
 
 
+def upscale_4k_to_8k(image_bytes: bytes) -> bytes:
+    """
+    Convenience function: Upscale 4K image to 8K for 9:16 aspect ratio.
+    """
+    return upscale_image(
+        image_bytes,
+        target_width=4320,
+        target_height=7680,
+        sharpen_amount=1.2  # Less sharpening for larger images
+    )
+
+
+def upscale_to_target(image_bytes: bytes, target: str) -> bytes:
+    """
+    Upscale image to target resolution.
+    
+    Args:
+        image_bytes: Input image
+        target: Target resolution ("4K" or "8K")
+    
+    Returns:
+        Upscaled image bytes
+    """
+    if target == "8K":
+        return upscale_4k_to_8k(image_bytes)
+    else:  # Default to 4K
+        return upscale_2k_to_4k(image_bytes)
+
+
 def should_upscale(image_bytes: bytes, min_height: int = 2000) -> bool:
     """
     Check if image should be upscaled based on current resolution.
     """
     img = Image.open(BytesIO(image_bytes))
     return img.height < min_height
+
