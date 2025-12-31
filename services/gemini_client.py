@@ -10,6 +10,7 @@ Features:
 
 import os
 import asyncio
+import random
 from io import BytesIO
 from typing import Optional, Literal, List
 from PIL import Image
@@ -254,6 +255,128 @@ STYLE_PRESETS = {
     }
 }
 
+# ============================================
+# STRICT GARMENT PRESERVATION RULES
+# ============================================
+
+STRICT_GARMENT_RULES = """
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  ⛔⛔⛔ ABSOLUTE CRITICAL - GARMENT MUST BE PIXEL-PERFECT COPY ⛔⛔⛔     ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+The garment in the reference image is a REAL PRODUCT being sold.
+ANY modification makes the output COMPLETELY WORTHLESS and UNUSABLE.
+
+🚫 ABSOLUTELY FORBIDDEN - DO NOT DO ANY OF THESE:
+╔═══════════════════════════════════════════════════════════════════════════╗
+║ • DO NOT change or modify ANY collar design, color, or pattern           ║
+║ • DO NOT alter ANY logo, emblem, badge, or brand mark                    ║
+║ • DO NOT change ANY text, letters, typography, or numbers                ║
+║ • DO NOT modify ANY graphic, print, illustration, or artwork             ║
+║ • DO NOT change the POSITION of any design element                       ║
+║ • DO NOT change the SIZE of any design element                           ║
+║ • DO NOT change ANY COLOR on the garment (fabric or prints)              ║
+║ • DO NOT add elements not present in the reference                       ║
+║ • DO NOT remove elements present in the reference                        ║
+║ • DO NOT "improve" or "enhance" any design - COPY EXACTLY                ║
+║ • DO NOT simplify or reinterpret any complex graphics                    ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+✅ YOU MUST DO THESE:
+╔═══════════════════════════════════════════════════════════════════════════╗
+║ • COPY every logo/graphic PIXEL-FOR-PIXEL exactly as shown               ║
+║ • MAINTAIN exact position of all design elements                         ║
+║ • PRESERVE exact colors (if striped collar, same stripe colors)          ║
+║ • KEEP exact shape and size of all graphics/prints                       ║
+║ • If garment has ribbed collar with stripes → output SAME stripes        ║
+║ • If garment has a chest print → output IDENTICAL chest print            ║
+║ • If garment has back graphic → output SAME back graphic                 ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+⚠️ FINAL CHECK: Before generating output, verify:
+1. Collar design matches reference EXACTLY
+2. All prints/graphics match reference EXACTLY
+3. Fabric color matches reference EXACTLY
+4. All text on garment matches reference EXACTLY
+"""
+
+# ============================================
+# CREATIVE PHRASES FOR CATALOG PAGES
+# ============================================
+
+CREATIVE_PHRASES = [
+    # Style & Fashion
+    "Effortless Style",
+    "Urban Edge",
+    "Street Ready",
+    "Fresh Look",
+    "Modern Classic",
+    "Cool Factor",
+    "Style Statement",
+    
+    # Comfort & Feel
+    "Pure Comfort",
+    "Easy Going",
+    "All Day Comfort",
+    "Soft Touch",
+    "Perfect Fit",
+    
+    # Season & Vibe
+    "Summer Vibes",
+    "Spring Essential",
+    "Weekend Ready",
+    "City Life",
+    "Day to Night",
+    
+    # Quality & Craftsmanship
+    "Premium Quality",
+    "Fine Details",
+    "Crafted with Care",
+    "Quality Matters",
+]
+
+# ============================================
+# MAGAZINE-STYLE LAYOUT VARIATIONS
+# ============================================
+
+CATALOG_LAYOUT_STYLES = [
+    {
+        "name": "hero_center",
+        "description": "Model centered with ample negative space, clean minimal composition",
+        "model_position": "perfectly centered",
+        "text_position": "small phrase at bottom corner"
+    },
+    {
+        "name": "off_center_left",
+        "description": "Model positioned on left third, dynamic negative space on right",
+        "model_position": "left side, rule of thirds",
+        "text_position": "elegant phrase on right side with breathing room"
+    },
+    {
+        "name": "off_center_right",
+        "description": "Model positioned on right third, artistic space on left",
+        "model_position": "right side, rule of thirds",
+        "text_position": "subtle phrase on left side"
+    },
+    {
+        "name": "low_angle_hero",
+        "description": "Dramatic low angle shot making model look powerful",
+        "model_position": "center frame, shot from below",
+        "text_position": "phrase at bottom edge"
+    },
+    {
+        "name": "three_quarter_dynamic",
+        "description": "3/4 angle with model turning, movement feel",
+        "model_position": "slight angle, body in rotation",
+        "text_position": "corner placement"
+    },
+    {
+        "name": "editorial_crop",
+        "description": "Tight framing focusing on torso and garment details",
+        "model_position": "cropped at thighs, focus on upper body",
+        "text_position": "minimal, bottom edge"
+    }
+]
 
 class GeminiClient:
     """Client for Gemini Image Generation with fallback support"""
@@ -1233,6 +1356,871 @@ Generate a beautiful catalog closing page."""
                         image_config=types.ImageConfig(
                             aspect_ratio="9:16",
                             image_size="4K" if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    # ============================================
+    # ENHANCED CATALOG GENERATION METHODS
+    # ============================================
+
+    async def generate_combo_layout(
+        self,
+        front_image: bytes,
+        back_image: bytes,
+        logo_image: Optional[bytes],
+        category: str,
+        skin_tone: str = "fair",
+        body_type: str = "",
+        theme: str = "studio_minimal",
+        collection_name: str = "",
+        image_quality: str = "4K"
+    ) -> bytes:
+        """Generate a combo layout with front AND back views in one image"""
+        
+        config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
+        skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        build = body_type if body_type else config["default_build"]
+        
+        prompt = f"""You are a world-class Fashion Photographer creating a COMBO LAYOUT poster.
+
+=== LAYOUT REQUIREMENT ===
+Create a SINGLE image showing the SAME model TWICE:
+- LEFT SIDE: Model wearing the garment (FRONT view)
+- RIGHT SIDE: Same model wearing the garment (BACK view)
+
+The image should be SPLIT VERTICALLY with a subtle divider or gradient transition.
+Both views should show the FULL BODY (head to toe).
+
+=== MODEL CONSISTENCY (CRITICAL) ===
+Both the front and back views MUST show the EXACT SAME model:
+- Same face, hair, skin tone, body type
+- Same height and proportions
+- Only difference is the viewing angle (front vs back)
+
+=== MODEL DETAILS ===
+- Description: {config['description']}, {config['age_range']}
+- Skin: {skin_desc}
+- Build: {build}
+- Expression: Natural, confident
+
+=== GARMENT PRESERVATION (CRITICAL) ===
+⛔ DO NOT modify, alter, or add anything to the garments
+✅ Copy EXACTLY what's shown in the reference images
+✅ Front garment image shows the FRONT of the product
+✅ Back garment image shows the BACK of the product
+
+=== DESIGN ===
+- Background: {theme_config['background_desc']}
+- Lighting: {theme_config['lighting']}
+- Mood: {theme_config['mood']}
+- Brand text at top or bottom: "{collection_name}" (use Montserrat font, elegant)
+
+=== TECHNICAL ===
+- Aspect ratio: 9:16 vertical
+- Resolution: {image_quality}
+- Both models equal size, professional catalog quality
+
+Generate the combo front+back layout now."""
+
+        front_pil = self._image_to_pil(front_image)
+        back_pil = self._image_to_pil(back_image)
+        
+        contents = [prompt, front_pil, "This is the FRONT view of the garment", back_pil, "This is the BACK view of the garment"]
+        
+        if logo_image:
+            logo_pil = self._image_to_pil(logo_image)
+            contents.extend([logo_pil, "Include this logo subtly in the design"])
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating combo layout with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await self._generate_with_timeout(
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    async def generate_fabric_closeup(
+        self,
+        garment_image: bytes,
+        theme: str = "studio_minimal",
+        collection_name: str = "",
+        fabric_description: str = "",
+        image_quality: str = "4K"
+    ) -> bytes:
+        """Generate an AI close-up of fabric texture (no model)"""
+        
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        
+        fabric_info = f'Fabric: "{fabric_description}"' if fabric_description else "Study the fabric texture from the reference"
+        
+        prompt = f"""You are a world-class Product Photographer specializing in FABRIC DETAIL photography.
+
+=== TASK ===
+Create a MACRO CLOSE-UP shot of the fabric/textile from the reference garment image.
+This is a TEXTURE FOCUS shot - NO MODEL, just the fabric.
+
+=== WHAT TO CAPTURE ===
+- The weave pattern and texture of the fabric
+- The material quality (cotton, polyester blend, knit, etc.)
+- Surface details: ribbing, stitching, fibers visible
+- Natural fabric draping or folds
+- Color accuracy - EXACT same color as reference
+
+=== COMPOSITION ===
+- Fill 80% of frame with fabric close-up
+- Soft, angled lighting to show texture
+- Slight depth of field (some areas in sharp focus, subtle blur at edges)
+- Can show a corner or fold of the garment
+- {fabric_info}
+
+=== STYLING ===
+- Background: {theme_config['background_desc']} (visible in small portions)
+- Lighting: Soft, diffused, brings out texture
+- Mood: Premium, tactile, quality-focused
+- Small text overlay: "{collection_name}" in Montserrat font (bottom corner)
+
+=== TECHNICAL ===
+- Aspect ratio: 9:16 vertical
+- Resolution: {image_quality}
+- Macro photography style
+- CRITICAL: Preserve exact fabric color and texture from reference
+
+Generate the fabric close-up now."""
+
+        garment_pil = self._image_to_pil(garment_image)
+        contents = [prompt, garment_pil, "Study this garment's fabric closely and recreate the texture"]
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating fabric closeup with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await self._generate_with_timeout(
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    async def generate_detail_highlight(
+        self,
+        garment_image: bytes,
+        theme: str = "studio_minimal",
+        collection_name: str = "",
+        image_quality: str = "4K"
+    ) -> bytes:
+        """Generate a focus shot on the highlight element (embroidery, print, etc.) - no model"""
+        
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        
+        prompt = f"""You are a world-class Product Photographer specializing in DETAIL SHOTS.
+
+=== TASK ===
+Create a DETAIL HIGHLIGHT shot focusing on the most visually interesting element of the garment.
+This is a FEATURE FOCUS shot - NO MODEL, just the detail.
+
+=== WHAT TO FIND AND HIGHLIGHT ===
+Study the reference garment and identify the MAIN DESIGN ELEMENT:
+- Is there embroidery? Focus on that.
+- Is there a printed graphic? Focus on that.
+- Is there a logo or badge? Focus on that.
+- Is there unique stitching or pattern? Focus on that.
+- If plain, focus on the collar/neckline detail or hem finish.
+
+=== COMPOSITION ===
+- The detail should fill 60-70% of the frame
+- Show the surrounding fabric for context
+- Dramatic angle that makes the detail look premium
+- Sharp focus on the main element, subtle blur on edges
+- Can show the garment laid flat or draped naturally
+
+=== STYLING ===
+- Background: {theme_config['background_desc']}
+- Lighting: {theme_config['lighting']} - highlight the detail dramatically
+- Mood: Premium, detail-oriented, craftsmanship focus
+- Text overlay: "{collection_name}" in Montserrat font (elegant, corner placement)
+- Optional: Add a subtle "DETAIL" or "CRAFTED" label
+
+=== TECHNICAL ===
+- Aspect ratio: 9:16 vertical
+- Resolution: {image_quality}
+- Product photography style
+- CRITICAL: The detail must match EXACTLY what's in the reference
+
+Generate the detail highlight shot now."""
+
+        garment_pil = self._image_to_pil(garment_image)
+        contents = [prompt, garment_pil, "Identify and highlight the main design element of this garment"]
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating detail highlight with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await self._generate_with_timeout(
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    async def generate_model_with_callout(
+        self,
+        garment_image: bytes,
+        logo_image: Optional[bytes],
+        category: str,
+        skin_tone: str = "fair",
+        body_type: str = "",
+        theme: str = "studio_minimal",
+        collection_name: str = "",
+        view: str = "front",
+        image_quality: str = "4K"
+    ) -> bytes:
+        """Generate model wearing garment WITH zoomed inset showing detail"""
+        
+        config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
+        skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        build = body_type if body_type else config["default_build"]
+        
+        prompt = f"""You are a world-class Fashion Photographer creating a MODEL + DETAIL CALLOUT layout.
+
+=== LAYOUT REQUIREMENT ===
+Create a SINGLE image with TWO elements:
+1. MAIN IMAGE: Full-body model wearing the garment ({view} view) - takes 75% of the space
+2. CALLOUT INSET: Zoomed circle or rounded rectangle showing a close-up of the garment's key detail
+
+=== CALLOUT DESIGN ===
+- Position the callout in a corner (bottom-right or top-right preferred)
+- Draw a thin line connecting the callout to the relevant area on the model
+- The callout shows: embroidery detail, print close-up, fabric texture, or logo
+- Make it look like a "zoom bubble" or "magnifier" effect
+
+=== MODEL DETAILS ===
+- Description: {config['description']}, {config['age_range']}
+- Skin: {skin_desc}
+- Build: {build}
+- Pose: Editorial, confident, showing off the garment
+- View: {view} view
+
+=== GARMENT PRESERVATION (CRITICAL) ===
+⛔ DO NOT modify the garment in any way
+✅ Copy EXACTLY what's shown in the reference image
+✅ The callout must show a real detail from the same garment
+
+=== DESIGN ===
+- Background: {theme_config['background_desc']}
+- Lighting: {theme_config['lighting']}
+- Mood: {theme_config['mood']}
+- Brand: "{collection_name}" in Montserrat font (subtle placement)
+
+=== TECHNICAL ===
+- Aspect ratio: 9:16 vertical
+- Resolution: {image_quality}
+- The callout should be clearly visible but not overwhelming
+
+Generate the model + callout layout now."""
+
+        garment_pil = self._image_to_pil(garment_image)
+        contents = [prompt, garment_pil, "Use this garment on the model and show a detail callout"]
+        
+        if logo_image:
+            logo_pil = self._image_to_pil(logo_image)
+            contents.extend([logo_pil, "Include this logo in the design"])
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating model + callout with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await self._generate_with_timeout(
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    async def generate_catalog_cover_enhanced(
+        self,
+        logo_image: Optional[bytes],
+        collection_name: str,
+        style_number: str,
+        theme: str,
+        image_quality: str = "4K"
+    ) -> bytes:
+        """Generate enhanced catalog cover with patterned background, centered logo, Montserrat font"""
+        
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        
+        prompt = f"""You are a world-class Graphic Designer creating a PREMIUM CATALOG COVER.
+
+=== THIS IS A COVER PAGE - NO MODEL ===
+DO NOT include any person or model in this image.
+This is purely a branding/title page for a fashion catalog.
+
+=== LAYOUT (CENTERED DESIGN) ===
+The design should be VERTICALLY CENTERED with:
+1. LOGO - Centered in the middle of the page (if provided)
+2. COLLECTION NAME - Large, elegant text BELOW the logo
+3. STYLE NUMBER - Smaller text BELOW the collection name
+
+All elements should be stacked vertically, perfectly centered.
+
+=== TEXT CONTENT ===
+- Collection Name: "{collection_name}"
+  → Use Montserrat Bold or Montserrat SemiBold
+  → Large, prominent, uppercase or title case
+  → Color: White or cream (legible on the background)
+  
+- Style Number: "{style_number}"
+  → Use Montserrat Light or Montserrat Regular
+  → Smaller than collection name
+  → Subtle, elegant
+  → Color: White or light gray
+
+=== BACKGROUND (PATTERNED/THEMED) ===
+Create a rich, patterned background that matches the theme:
+Theme: {theme}
+Background Style: {theme_config['background_desc']}
+Mood: {theme_config['mood']}
+
+The background should NOT be plain white. Include:
+- Subtle patterns, textures, or gradients
+- Geometric shapes or abstract elements
+- Color palette matching the theme
+- Premium, fashion-forward aesthetic
+
+=== DESIGN PRINCIPLES ===
+- Clean, luxurious, high-end fashion brand feel
+- Ample breathing space around text
+- The page should feel COMPLETE and PREMIUM
+- Think: Zara, COS, Massimo Dutti catalog covers
+- Decorative elements should enhance, not overwhelm
+
+=== TECHNICAL ===
+- Aspect ratio: 9:16 vertical
+- Resolution: {image_quality}
+- Print-ready quality
+- Sharp, crisp typography
+
+Generate an elegant, premium catalog cover page."""
+
+        contents = [prompt]
+        
+        if logo_image:
+            logo_pil = self._image_to_pil(logo_image)
+            contents.extend([logo_pil, "Place this logo CENTERED in the middle of the page, above the collection name."])
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating enhanced cover with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await self._generate_with_timeout(
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    async def generate_catalog_thankyou_simple(
+        self,
+        logo_image: Optional[bytes],
+        collection_name: str,
+        theme: str,
+        image_quality: str = "4K"
+    ) -> bytes:
+        """Generate simple Thank You page with matching theme"""
+        
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        
+        prompt = f"""You are a world-class Graphic Designer creating a CATALOG CLOSING PAGE.
+
+=== THIS IS A THANK YOU PAGE - NO MODEL ===
+DO NOT include any person or model in this image.
+This is the final closing page of a fashion catalog.
+
+=== LAYOUT (SIMPLE, ELEGANT) ===
+The design should be CENTERED with:
+1. "Thank You" or "THANK YOU" - Large, elegant text in the center
+2. LOGO - If provided, place above or below the thank you text
+3. Collection name: "{collection_name}" - Subtle, smaller text
+
+=== TYPOGRAPHY ===
+- "Thank You" in Montserrat font (can be Light or Regular weight)
+- Elegant, refined, not overly bold
+- Can be cursive/script style for variety
+- Color: White, cream, or matching theme palette
+
+=== BACKGROUND (MATCHING THEME) ===
+Theme: {theme}
+Background Style: {theme_config['background_desc']}
+Mood: {theme_config['mood']}
+
+The background should MATCH the cover page style:
+- Same patterns, colors, textures
+- Cohesive with the overall catalog aesthetic
+- Premium, fashion-forward
+
+=== DESIGN PRINCIPLES ===
+- Simple, clean, elegant
+- Not cluttered - just Thank You + logo
+- The page should feel like a graceful ending
+- Think: End card of a fashion film
+
+=== TECHNICAL ===
+- Aspect ratio: 9:16 vertical
+- Resolution: {image_quality}
+- Print-ready quality
+
+Generate an elegant catalog closing page."""
+
+        contents = [prompt]
+        
+        if logo_image:
+            logo_pil = self._image_to_pil(logo_image)
+            contents.extend([logo_pil, "Include this logo in the Thank You page design."])
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating thank you page with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await self._generate_with_timeout(
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    async def generate_catalog_product_page_v2(
+        self,
+        garment_image: bytes,
+        category: str,
+        view: Literal["front", "back"],
+        skin_tone: str = "fair",
+        body_type: str = "",
+        theme: str = "studio_minimal",
+        page_number: int = 1,
+        total_pages: int = 10,
+        image_quality: str = "4K"
+    ) -> bytes:
+        """
+        Generate enhanced catalog product page with:
+        - Strict garment preservation
+        - No brand name overlay (only cover has that)
+        - AI-generated creative phrase
+        - Magazine-style varied layouts
+        - Continuity in theme but unique compositions
+        """
+        
+        config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
+        skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        build = body_type if body_type else config["default_build"]
+        
+        # Select a unique layout based on page number for variety
+        layout = CATALOG_LAYOUT_STYLES[page_number % len(CATALOG_LAYOUT_STYLES)]
+        
+        # Select a unique creative phrase
+        phrase = CREATIVE_PHRASES[(page_number * 3) % len(CREATIVE_PHRASES)]
+        
+        # Vary the pose based on page number for uniqueness
+        pose_options = ["catalog_standard", "hands_in_pockets", "one_hand_pocket", 
+                       "three_quarter", "hands_on_hips", "arms_crossed"]
+        selected_pose = pose_options[page_number % len(pose_options)]
+        pose_desc = POSE_TYPES.get(selected_pose, POSE_TYPES["catalog_standard"])
+        
+        prompt = f"""You are a world-class Fashion Photographer creating a PREMIUM CATALOG PAGE.
+
+{STRICT_GARMENT_RULES}
+
+═══════════════════════════════════════════════════════════════════════════
+PAGE {page_number} OF {total_pages} - {view.upper()} VIEW
+═══════════════════════════════════════════════════════════════════════════
+
+=== LAYOUT STYLE: {layout['name'].upper()} ===
+{layout['description']}
+- Model position: {layout['model_position']}
+- Text placement: {layout['text_position']}
+
+=== MODEL DETAILS ===
+- Subject: {config['description']}, {config['age_range']}
+- Skin: {skin_desc}
+- Build: {build}
+- Pose: {pose_desc}
+- View: {view} view of the garment
+- Expression: Natural, confident, engaging
+
+=== CREATIVE PHRASE (SMALL, SUBTLE) ===
+Include this short phrase in elegant typography:
+"{phrase}"
+- Font: Thin, elegant sans-serif (like Montserrat Light)
+- Size: Small, NOT overwhelming
+- Position: {layout['text_position']}
+- Color: Subtle, matches theme (white, cream, or muted)
+- DO NOT add collection name or brand name - ONLY this phrase
+
+=== DESIGN & THEME ===
+- Background: {theme_config['background_desc']}
+- Lighting: {theme_config['lighting']}
+- Mood: {theme_config['mood']}
+- Feel: Premium fashion catalog (Zara, COS, Massimo Dutti quality)
+
+=== UNIQUENESS REQUIREMENT ===
+This page should feel UNIQUE but part of the SAME CATALOG:
+- Same overall theme and color palette as other pages
+- Same quality and style of photography
+- BUT different composition/angle/pose from other pages
+- Magazine editorial variety within cohesive collection
+
+=== PHOTOGRAPHY TECHNICAL ===
+- Aspect ratio: 9:16 vertical
+- Resolution: {image_quality}
+- Professional fashion photography quality
+- Clean, crisp, sharp focus on model and garment
+
+=== FINAL VERIFICATION ===
+Before output, verify:
+☐ Garment matches reference EXACTLY (collar, prints, colors)
+☐ Model is positioned per layout style
+☐ Creative phrase "{phrase}" is visible but subtle
+☐ NO collection name or brand text on page
+☐ Theme matches the catalog aesthetic
+
+Generate this premium catalog page now."""
+
+        garment_pil = self._image_to_pil(garment_image)
+        contents = [
+            prompt, 
+            garment_pil, 
+            f"This is the {view} view of the garment. Copy it EXACTLY onto the model."
+        ]
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating catalog page V2 ({view}) with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await self._generate_with_timeout(
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    async def generate_fabric_closeup_v2(
+        self,
+        garment_image: bytes,
+        theme: str = "studio_minimal",
+        page_number: int = 1,
+        image_quality: str = "4K"
+    ) -> bytes:
+        """
+        Generate enhanced artistic fabric close-up (no model, no brand text)
+        - Macro photography style
+        - Artistic lighting and composition
+        - Creative phrase overlay
+        """
+        
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        phrase = CREATIVE_PHRASES[(page_number * 5 + 7) % len(CREATIVE_PHRASES)]
+        
+        prompt = f"""You are a world-class Macro Photographer specializing in TEXTILE ARTISTRY.
+
+=== TASK: ARTISTIC FABRIC CLOSE-UP ===
+Create a STUNNING macro close-up photograph of the fabric from the reference garment.
+NO MODEL in this image - just the fabric in an artistic composition.
+
+=== ARTISTIC DIRECTION ===
+This is NOT a simple product shot. This is TEXTILE ART.
+
+COMPOSITION IDEAS (pick one):
+- Dramatic fabric folds with deep shadows and highlights
+- Soft draping with gentle curves, shot from an angle
+- Extreme close-up showing individual threads/weave
+- Fabric corner with beautiful lighting gradient
+- Rippling texture with motion-like feel
+
+LIGHTING:
+- Soft, directional side lighting
+- Creates depth and texture visibility
+- Subtle shadows in fabric folds
+- Gentle highlights on raised areas
+
+DEPTH OF FIELD:
+- Shallow depth of field for artistic feel
+- Sharp focus on center of interest
+- Beautiful soft bokeh on edges
+
+=== FROM THE REFERENCE ===
+Study the fabric in the reference image:
+- Match the EXACT color of the fabric
+- Match the EXACT texture (cotton, polyester, ribbed, smooth, etc.)
+- If there are any patterns, show a partial glimpse
+
+=== CREATIVE PHRASE ===
+Small, elegant text: "{phrase}"
+- Very subtle, corner placement
+- Thin elegant font
+- Does NOT distract from the fabric beauty
+
+=== THEME MATCHING ===
+Background elements: {theme_config['background_desc']}
+Overall mood: {theme_config['mood']}
+
+=== TECHNICAL ===
+- Aspect ratio: 9:16 vertical
+- Resolution: {image_quality}
+- Macro photography quality
+- NO brand names, NO collection text
+
+Generate this artistic fabric photograph now."""
+
+        garment_pil = self._image_to_pil(garment_image)
+        contents = [
+            prompt, 
+            garment_pil, 
+            "Study this garment's fabric - texture, color, weave - and create an artistic macro shot."
+        ]
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating fabric closeup V2 with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await self._generate_with_timeout(
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
+                        )
+                    )
+                )
+                
+                return self._extract_image_from_response(response)
+                
+            except Exception as e:
+                print(f"Model {model_to_use} failed: {e}")
+                if attempt == 1:
+                    raise
+                print("Retrying with fallback...")
+        
+        raise ValueError("All models failed")
+
+    async def generate_collage_layout(
+        self,
+        front_image: bytes,
+        back_image: bytes,
+        category: str,
+        skin_tone: str = "fair",
+        body_type: str = "",
+        theme: str = "studio_minimal",
+        page_number: int = 1,
+        image_quality: str = "4K"
+    ) -> bytes:
+        """
+        Generate creative collage layout with multiple views/angles
+        Magazine-style multi-image composition on single page
+        """
+        
+        config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
+        skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
+        theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
+        build = body_type if body_type else config["default_build"]
+        phrase = CREATIVE_PHRASES[(page_number * 7 + 3) % len(CREATIVE_PHRASES)]
+        
+        # Different collage layouts based on page number
+        collage_styles = [
+            "2 images side by side: FRONT view on left (60% width), BACK view on right (40% width), slight size difference for dynamism",
+            "3 images: Large FRONT view top left (70% height), Medium BACK view bottom right, small detail crop top right corner",
+            "Diagonal split: FRONT view fills upper-left triangle, BACK view fills lower-right triangle",
+            "Grid of 4: Front full-body top-left, Back full-body top-right, Front torso close-up bottom-left, Back detail bottom-right",
+            "Asymmetric split: Large hero FRONT view (75%), floating smaller BACK view overlapping corner",
+        ]
+        
+        layout_style = collage_styles[page_number % len(collage_styles)]
+        
+        prompt = f"""You are a world-class Fashion Art Director creating a COLLAGE LAYOUT.
+
+{STRICT_GARMENT_RULES}
+
+=== COLLAGE COMPOSITION ===
+{layout_style}
+
+=== MODEL CONSISTENCY (CRITICAL) ===
+ALL views in the collage must show the EXACT SAME model:
+- Same face, same hairstyle, same skin tone
+- Same body proportions
+- IDENTICAL model, just different poses/angles
+
+=== MODEL DETAILS ===
+- Subject: {config['description']}, {config['age_range']}
+- Skin: {skin_desc}
+- Build: {build}
+- Expression: Natural, confident
+
+=== GARMENT ===
+- FRONT IMAGE: Shows the front of the garment
+- BACK IMAGE: Shows the back of the garment
+- Copy BOTH exactly as provided in references
+
+=== DESIGN ===
+- Background: {theme_config['background_desc']}
+- Dividers/separators: Clean, minimal, modern
+- Mood: {theme_config['mood']}
+- Feel: High-end fashion magazine spread
+
+=== CREATIVE PHRASE ===
+Small text: "{phrase}"
+- Elegant, minimal placement
+- Does NOT compete with images
+
+=== TECHNICAL ===
+- Aspect ratio: 9:16 vertical
+- Resolution: {image_quality}
+- Editorial magazine quality
+- NO brand names on this page
+
+Generate this collage layout now."""
+
+        front_pil = self._image_to_pil(front_image)
+        back_pil = self._image_to_pil(back_image)
+        
+        contents = [
+            prompt, 
+            front_pil, "FRONT view of garment - copy exactly",
+            back_pil, "BACK view of garment - copy exactly"
+        ]
+        
+        for attempt, model_to_use in enumerate([self.PRIMARY_MODEL, self.FALLBACK_MODEL]):
+            try:
+                print(f"Generating collage layout with {model_to_use} (attempt {attempt + 1})")
+                
+                response = await self._generate_with_timeout(
+                    model=model_to_use,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
                         )
                     )
                 )

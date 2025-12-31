@@ -361,17 +361,11 @@ async def get_style_presets():
 
 
 # ============================================
-# MASTER CATALOG FEATURE
+# MASTER CATALOG FEATURE (ENHANCED)
 # ============================================
 
-# Hardcoded contact details
-BONO_CONTACT = {
-    "company": "BONOSTYLE CREATIONS LLP",
-    "email": "contact@bonostyle.in",
-    "phone": "(+91) 9789116300",
-    "address": "3238C, 2nd Street, P.N Road, Anna Nagar, Tiruppur, Tamil Nadu - 641602",
-    "website": "bonostyle.in"
-}
+# Layout types for catalog pages
+LAYOUT_TYPES = ['front', 'back', 'combo', 'fabric_closeup', 'detail_highlight', 'model_callout']
 
 # Assorted options for variety in catalog
 CATALOG_POSES = ["catalog_standard", "hands_on_hips", "hands_in_pockets", "arms_crossed", "walking", "leaning_wall", "editorial_dramatic"]
@@ -379,45 +373,137 @@ CATALOG_PROPS = ["none", "sunglasses", "cap", "watch", "headphones"]
 CATALOG_LAYOUTS = ["hero_bottom", "split_vertical", "magazine_cover", "overlay_gradient", "framed_border", "product_focus", "lookbook_spread"]
 
 
+def plan_catalog_pages(num_products: int, max_pages: int = 14) -> list:
+    """
+    Plan smart layout distribution for catalog pages.
+    Returns list of tuples: (layout_type, product_index, additional_data)
+    
+    Target: 14-16 pages for up to 10 products
+    - Combos reduce page count (2 views in 1 page)
+    - Fabric closeups and detail highlights add variety
+    """
+    pages = []
+    
+    # For very few products, show all views
+    if num_products <= 2:
+        for i in range(num_products):
+            pages.append(('front', i, {'pose': CATALOG_POSES[i % len(CATALOG_POSES)]}))
+            pages.append(('back', i, {'pose': CATALOG_POSES[(i + 2) % len(CATALOG_POSES)]}))
+        # Add one fabric closeup
+        pages.append(('fabric_closeup', 0, {}))
+        return pages
+    
+    # For 3-10 products, use smart distribution
+    content_pages = max_pages - 2  # Reserve for cover and thank you
+    
+    # V2 Distribution: More collages, fabric shots, variety
+    # - Collage pages (front+back combos): 2-3
+    # - Fabric close-ups: 1-2 
+    # - Single product pages (variety): remaining
+    
+    num_collages = min(3, num_products)  # More collages for variety
+    num_fabric = min(2, num_products)
+    
+    # Remaining slots for single views
+    remaining = content_pages - num_collages - num_fabric
+    
+    used_products = set()
+    page_idx = 0
+    
+    # 1. Add collage pages (front+back in creative compositions)
+    for i in range(num_collages):
+        prod_idx = i % num_products
+        pages.append(('collage', prod_idx, {'page_number': i + 1}))
+        used_products.add(prod_idx)
+        page_idx += 1
+    
+    # 2. Add fabric closeup pages (artsy fabric shots)
+    fabric_idx = num_collages
+    for i in range(num_fabric):
+        prod_idx = (fabric_idx + i) % num_products
+        pages.append(('fabric_v2', prod_idx, {'page_number': page_idx + 1}))
+        page_idx += 1
+    
+    # 3. Fill remaining with single product pages (alternating front/back)
+    view_toggle = True
+    current_product = 0
+    
+    for i in range(remaining):
+        if page_idx >= content_pages:
+            break
+        
+        prod_idx = current_product % num_products
+        view = 'front' if view_toggle else 'back'
+        
+        pages.append(('single_v2', prod_idx, {'view': view, 'page_number': page_idx + 1}))
+        
+        view_toggle = not view_toggle
+        if not view_toggle:  # After back view, move to next product
+            current_product += 1
+        page_idx += 1
+    
+    return pages
+
+
+def create_pdf_from_images(image_bytes_list: list) -> bytes:
+    """Create a PDF from a list of image bytes (one image per page)"""
+    from PIL import Image
+    from io import BytesIO
+    
+    if not image_bytes_list:
+        raise ValueError("No images to create PDF")
+    
+    # Convert all images to PIL and RGB mode
+    pil_images = []
+    for img_bytes in image_bytes_list:
+        img = Image.open(BytesIO(img_bytes))
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        pil_images.append(img)
+    
+    # Create PDF
+    pdf_buffer = BytesIO()
+    pil_images[0].save(
+        pdf_buffer, 
+        'PDF', 
+        save_all=True, 
+        append_images=pil_images[1:] if len(pil_images) > 1 else []
+    )
+    
+    return pdf_buffer.getvalue()
+
+
+
 @router.post("/generate-catalog")
 async def generate_master_catalog(
     # Basic fields
     category: CategoryEnum = Form(...),
     collection_name: str = Form(...),
-    collection_number: str = Form(""),
+    collection_number: str = Form(""),  # Original field name from frontend
     theme: str = Form("studio_minimal"),
     
     # Model appearance
     skin_tone: str = Form("fair"),
     body_type: str = Form(""),
     
-    # Optional text fields (10 total, all optional)
-    text_tagline: str = Form(""),
-    text_season: str = Form(""),
-    text_year: str = Form(""),
-    text_price_range: str = Form(""),
-    text_fabric: str = Form(""),
-    text_brand_message: str = Form(""),
-    text_custom_1: str = Form(""),
-    text_custom_2: str = Form(""),
-    text_custom_3: str = Form(""),
-    text_custom_4: str = Form(""),
+    # Quality
+    image_quality: str = Form("4K"),
     
     # Images
     front_images: List[UploadFile] = File(...),
     back_images: List[UploadFile] = File(...),
     logo: Optional[UploadFile] = File(None)
 ):
-    """Generate a complete Master Catalog: Cover + N product pages + Thank You page"""
+    """Generate enhanced Master Catalog with smart layout distribution"""
     
     if len(front_images) != len(back_images):
         raise HTTPException(status_code=400, detail="Number of front and back images must match")
     
-    if len(front_images) < 1 or len(front_images) > 20:
-        raise HTTPException(status_code=400, detail="Provide 1-20 products")
+    if len(front_images) < 1 or len(front_images) > 10:
+        raise HTTPException(status_code=400, detail="Provide 1-10 products")
     
     num_products = len(front_images)
-    print(f"Master Catalog: {num_products} products, theme: {theme}")
+    print(f"Enhanced Master Catalog: {num_products} products, theme: {theme}")
     
     try:
         gemini = GeminiClient()
@@ -434,104 +520,143 @@ async def generate_master_catalog(
         
         generated_images = []
         
-        # Gather optional texts
-        text_content = {
-            "tagline": text_tagline,
-            "season": text_season,
-            "year": text_year,
-            "price_range": text_price_range,
-            "fabric": text_fabric,
-            "brand_message": text_brand_message,
-            "custom_1": text_custom_1,
-            "custom_2": text_custom_2,
-            "custom_3": text_custom_3,
-            "custom_4": text_custom_4
-        }
-        
         # ========== 1. COVER PAGE ==========
-        print("Generating cover page...")
-        cover = await gemini.generate_catalog_cover(
+        print("Generating enhanced cover page...")
+        cover = await gemini.generate_catalog_cover_enhanced(
             logo_image=logo_data,
             collection_name=collection_name,
-            collection_number=collection_number,
+            style_number=collection_number,  # Use collection_number from frontend
             theme=theme,
-            text_content=text_content
+            image_quality=image_quality
         )
         generated_images.append(("00_cover.png", cover))
         
-        # ========== 2. PRODUCT PAGES (N pages, assorted styles) ==========
-        for i, (front, back) in enumerate(zip(front_processed, back_processed)):
-            page_num = i + 1
+        # ========== 2. PRODUCT PAGES (Smart Layout) ==========
+        page_plan = plan_catalog_pages(num_products, max_pages=14)
+        print(f"Page plan: {len(page_plan)} content pages")
+        
+        for page_num, (layout_type, prod_idx, extra) in enumerate(page_plan, start=1):
+            print(f"Page {page_num}/{len(page_plan)}: {layout_type} for product {prod_idx + 1}")
             
-            # Cycle through poses, props, layouts for variety
-            pose = CATALOG_POSES[i % len(CATALOG_POSES)]
-            prop = CATALOG_PROPS[i % len(CATALOG_PROPS)]
-            layout = CATALOG_LAYOUTS[i % len(CATALOG_LAYOUTS)]
-            
-            print(f"Generating product {page_num}/{num_products} - layout: {layout}")
-            
-            # Generate FRONT view
-            front_page = await gemini.generate_marketing_poster(
-                garment_image=front,
-                logo_image=logo_data,
-                category=category,
-                skin_tone=skin_tone,
-                body_type=body_type,
-                marketing_theme=theme,
-                prop=prop,
-                pose_type=pose,
-                shot_angle="front_facing",
-                layout_style=layout,
-                text_content={
-                    "brand": collection_name,
-                    "headline": text_content.get("tagline", ""),
-                    "price": text_content.get("price_range", ""),
-                    "subtext": text_content.get("fabric", "")
-                }
-            )
-            generated_images.append((f"{page_num:02d}_product_{page_num}_front.png", front_page))
-            
-            # Generate BACK view with different layout
-            back_layout = CATALOG_LAYOUTS[(i + 3) % len(CATALOG_LAYOUTS)]
-            back_pose = CATALOG_POSES[(i + 2) % len(CATALOG_POSES)]
-            
-            back_page = await gemini.generate_marketing_poster(
-                garment_image=back,
-                logo_image=logo_data,
-                category=category,
-                skin_tone=skin_tone,
-                body_type=body_type,
-                marketing_theme=theme,
-                prop="none",
-                pose_type=back_pose,
-                shot_angle="back_view",
-                layout_style=back_layout,
-                text_content={
-                    "brand": collection_name,
-                    "subtext": "Back View"
-                }
-            )
-            generated_images.append((f"{page_num:02d}_product_{page_num}_back.png", back_page))
+            try:
+                if layout_type == 'collage':
+                    # V2: Creative collage layout (front + back)
+                    page_number = extra.get('page_number', page_num)
+                    page = await gemini.generate_collage_layout(
+                        front_image=front_processed[prod_idx],
+                        back_image=back_processed[prod_idx],
+                        category=category,
+                        skin_tone=skin_tone,
+                        body_type=body_type,
+                        theme=theme,
+                        page_number=page_number,
+                        image_quality=image_quality
+                    )
+                    generated_images.append((f"{page_num:02d}_collage_product_{prod_idx + 1}.png", page))
+                
+                elif layout_type == 'fabric_v2':
+                    # V2: Artistic fabric close-up (no brand text)
+                    page_number = extra.get('page_number', page_num)
+                    page = await gemini.generate_fabric_closeup_v2(
+                        garment_image=front_processed[prod_idx],
+                        theme=theme,
+                        page_number=page_number,
+                        image_quality=image_quality
+                    )
+                    generated_images.append((f"{page_num:02d}_fabric_art_{prod_idx + 1}.png", page))
+                
+                elif layout_type == 'single_v2':
+                    # V2: Single product page with variety (no brand text, AI phrase)
+                    view = extra.get('view', 'front')
+                    page_number = extra.get('page_number', page_num)
+                    garment = front_processed[prod_idx] if view == 'front' else back_processed[prod_idx]
+                    
+                    page = await gemini.generate_catalog_product_page_v2(
+                        garment_image=garment,
+                        category=category,
+                        view=view,
+                        skin_tone=skin_tone,
+                        body_type=body_type,
+                        theme=theme,
+                        page_number=page_number,
+                        total_pages=len(page_plan),
+                        image_quality=image_quality
+                    )
+                    generated_images.append((f"{page_num:02d}_{view}_product_{prod_idx + 1}.png", page))
+                
+                # Legacy fallback for old layout types
+                elif layout_type == 'combo':
+                    page = await gemini.generate_combo_layout(
+                        front_image=front_processed[prod_idx],
+                        back_image=back_processed[prod_idx],
+                        logo_image=logo_data,
+                        category=category,
+                        skin_tone=skin_tone,
+                        body_type=body_type,
+                        theme=theme,
+                        collection_name=collection_name,
+                        image_quality=image_quality
+                    )
+                    generated_images.append((f"{page_num:02d}_combo_product_{prod_idx + 1}.png", page))
+                
+                elif layout_type in ['front', 'back']:
+                    view = layout_type
+                    garment = front_processed[prod_idx] if view == 'front' else back_processed[prod_idx]
+                    page = await gemini.generate_catalog_product_page_v2(
+                        garment_image=garment,
+                        category=category,
+                        view=view,
+                        skin_tone=skin_tone,
+                        body_type=body_type,
+                        theme=theme,
+                        page_number=page_num,
+                        total_pages=len(page_plan),
+                        image_quality=image_quality
+                    )
+                    generated_images.append((f"{page_num:02d}_{view}_product_{prod_idx + 1}.png", page))
+                    
+            except Exception as e:
+                print(f"Failed to generate {layout_type} for product {prod_idx + 1}: {e}")
+                import traceback
+                traceback.print_exc()
+                # Continue with other pages
+                continue
         
         # ========== 3. THANK YOU PAGE ==========
         print("Generating thank you page...")
-        thankyou = await gemini.generate_catalog_thankyou(
+        thankyou = await gemini.generate_catalog_thankyou_simple(
             logo_image=logo_data,
             collection_name=collection_name,
             theme=theme,
-            product_images=front_processed[:6],  # Max 6 for collage
-            contact_info=BONO_CONTACT
+            image_quality=image_quality
         )
         generated_images.append(("99_thankyou.png", thankyou))
         
-        print(f"Generated {len(generated_images)} images, creating ZIP...")
+        print(f"Generated {len(generated_images)} images, creating ZIP and PDF...")
         
-        # Create ZIP
+        # ========== 4. CREATE PDF ==========
+        print("Creating PDF from images...")
+        try:
+            image_bytes_only = [img_bytes for _, img_bytes in generated_images]
+            pdf_bytes = create_pdf_from_images(image_bytes_only)
+            print(f"PDF created: {len(pdf_bytes)} bytes")
+        except Exception as pdf_error:
+            print(f"PDF creation failed: {pdf_error}")
+            pdf_bytes = None
+        
+        # ========== 5. CREATE ZIP WITH IMAGES + PDF ==========
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
             for filename, image_bytes in generated_images:
                 print(f"Adding: {filename} ({len(image_bytes)} bytes)")
                 zf.writestr(filename, image_bytes)
+            
+            # Add PDF if created successfully
+            if pdf_bytes:
+                pdf_filename = f"{collection_name or 'catalog'}_complete.pdf"
+                safe_pdf_name = "".join(c for c in pdf_filename if c.isalnum() or c in ' -_.').strip()
+                zf.writestr(safe_pdf_name, pdf_bytes)
+                print(f"Added PDF: {safe_pdf_name}")
         
         zip_buffer.seek(0)
         
