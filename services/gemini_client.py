@@ -11,11 +11,18 @@ Features:
 import os
 import asyncio
 import random
+import hashlib
 from io import BytesIO
+from pathlib import Path
 from typing import Optional, Literal, List
 from PIL import Image
 from google import genai
 from google.genai import types
+
+
+# Cache directory for generated images
+CACHE_DIR = Path(__file__).parent.parent / "cache" / "generated_images"
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================
@@ -396,6 +403,37 @@ class GeminiClient:
     
     # Timeout for API calls (2 minutes per image)
     API_TIMEOUT = 120
+    
+    # ============================================
+    # CACHING METHODS
+    # ============================================
+    
+    def _get_cache_key(self, *args) -> str:
+        """Generate a unique cache key from input parameters"""
+        # Create a hash from all input arguments
+        key_data = ""
+        for arg in args:
+            if isinstance(arg, bytes):
+                # For image bytes, use first/last bytes + length as fingerprint
+                key_data += f"img_{len(arg)}_{hashlib.md5(arg).hexdigest()[:8]}_"
+            elif arg is not None:
+                key_data += f"{str(arg)}_"
+        
+        return hashlib.sha256(key_data.encode()).hexdigest()[:32]
+    
+    def _get_cached_image(self, cache_key: str) -> Optional[bytes]:
+        """Check if image exists in cache and return it"""
+        cache_path = CACHE_DIR / f"{cache_key}.png"
+        if cache_path.exists():
+            print(f"✅ Cache HIT: {cache_key[:8]}...")
+            return cache_path.read_bytes()
+        return None
+    
+    def _cache_image(self, cache_key: str, image_bytes: bytes) -> None:
+        """Save generated image to cache"""
+        cache_path = CACHE_DIR / f"{cache_key}.png"
+        cache_path.write_bytes(image_bytes)
+        print(f"💾 Cached: {cache_key[:8]}... ({len(image_bytes)} bytes)")
     
     async def _generate_with_timeout(self, model, contents, config):
         """Wrapper to add timeout to generation calls"""
@@ -1914,6 +1952,15 @@ Generate an elegant catalog closing page."""
         - Continuity in theme but unique compositions
         """
         
+        # Check cache first
+        cache_key = self._get_cache_key(
+            "product_page_v2", garment_image, category, view, 
+            skin_tone, body_type, theme, page_number, image_quality
+        )
+        cached = self._get_cached_image(cache_key)
+        if cached:
+            return cached
+        
         config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
         skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
         theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
@@ -2013,7 +2060,9 @@ Generate this premium catalog page now."""
                     )
                 )
                 
-                return self._extract_image_from_response(response)
+                result = self._extract_image_from_response(response)
+                self._cache_image(cache_key, result)  # Save to cache
+                return result
                 
             except Exception as e:
                 print(f"Model {model_to_use} failed: {e}")
@@ -2036,6 +2085,14 @@ Generate this premium catalog page now."""
         - Artistic lighting and composition
         - Creative phrase overlay
         """
+        
+        # Check cache first
+        cache_key = self._get_cache_key(
+            "fabric_v2", garment_image, theme, page_number, image_quality
+        )
+        cached = self._get_cached_image(cache_key)
+        if cached:
+            return cached
         
         theme_config = THEME_CONFIG.get(theme, THEME_CONFIG["studio_minimal"])
         phrase = CREATIVE_PHRASES[(page_number * 5 + 7) % len(CREATIVE_PHRASES)]
@@ -2114,7 +2171,9 @@ Generate this artistic fabric photograph now."""
                     )
                 )
                 
-                return self._extract_image_from_response(response)
+                result = self._extract_image_from_response(response)
+                self._cache_image(cache_key, result)  # Save to cache
+                return result
                 
             except Exception as e:
                 print(f"Model {model_to_use} failed: {e}")
@@ -2139,6 +2198,15 @@ Generate this artistic fabric photograph now."""
         Generate creative collage layout with multiple views/angles
         Magazine-style multi-image composition on single page
         """
+        
+        # Check cache first
+        cache_key = self._get_cache_key(
+            "collage", front_image, back_image, category, 
+            skin_tone, body_type, theme, page_number, image_quality
+        )
+        cached = self._get_cached_image(cache_key)
+        if cached:
+            return cached
         
         config = MODEL_CONFIG.get(category, MODEL_CONFIG["teen_boy"])
         skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES.get("fair", skin_tone))
@@ -2225,7 +2293,9 @@ Generate this collage layout now."""
                     )
                 )
                 
-                return self._extract_image_from_response(response)
+                result = self._extract_image_from_response(response)
+                self._cache_image(cache_key, result)  # Save to cache
+                return result
                 
             except Exception as e:
                 print(f"Model {model_to_use} failed: {e}")

@@ -373,36 +373,36 @@ CATALOG_PROPS = ["none", "sunglasses", "cap", "watch", "headphones"]
 CATALOG_LAYOUTS = ["hero_bottom", "split_vertical", "magazine_cover", "overlay_gradient", "framed_border", "product_focus", "lookbook_spread"]
 
 
-def plan_catalog_pages(num_products: int, max_pages: int = 14) -> list:
+def plan_catalog_pages(num_products: int, max_pages: int = 10) -> list:
     """
     Plan smart layout distribution for catalog pages.
     Returns list of tuples: (layout_type, product_index, additional_data)
     
-    Target: 14-16 pages for up to 10 products
-    - Combos reduce page count (2 views in 1 page)
-    - Fabric closeups and detail highlights add variety
+    Target: 10-12 pages for up to 10 products (OPTIMIZED for cost)
+    - Collages are 2x efficient (front+back in 1 page)
+    - More collages = fewer total generations = lower cost
     """
     pages = []
     
-    # For very few products, show all views
+    # For very few products, show all views in collages
     if num_products <= 2:
         for i in range(num_products):
-            pages.append(('front', i, {'pose': CATALOG_POSES[i % len(CATALOG_POSES)]}))
-            pages.append(('back', i, {'pose': CATALOG_POSES[(i + 2) % len(CATALOG_POSES)]}))
+            pages.append(('collage', i, {'page_number': i + 1}))
         # Add one fabric closeup
-        pages.append(('fabric_closeup', 0, {}))
+        pages.append(('fabric_v2', 0, {'page_number': num_products + 1}))
         return pages
     
     # For 3-10 products, use smart distribution
-    content_pages = max_pages - 2  # Reserve for cover and thank you
+    content_pages = max_pages - 2  # Reserve for cover and thank you (= 8 pages)
     
-    # V2 Distribution: More collages, fabric shots, variety
-    # - Collage pages (front+back combos): 2-3
-    # - Fabric close-ups: 1-2 
-    # - Single product pages (variety): remaining
+    # COST-OPTIMIZED Distribution:
+    # - More collages (each shows front+back = 2 views for 1 generation)
+    # - 1 fabric close-up only
+    # - Fewer single pages
     
-    num_collages = min(3, num_products)  # More collages for variety
-    num_fabric = min(2, num_products)
+    # Use collages for most products (each collage = 2 views, 1 generation)
+    num_collages = min(num_products, 4)  # Up to 4 collages (= 8 product views)
+    num_fabric = 1  # Only 1 fabric shot to save cost
     
     # Remaining slots for single views
     remaining = content_pages - num_collages - num_fabric
