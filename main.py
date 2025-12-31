@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
 from routes.catalog import router as catalog_router
+from routes.batch import router as batch_router
 
 load_dotenv()
 
@@ -31,12 +32,15 @@ app.add_middleware(
 # Create output directories
 os.makedirs("outputs/images", exist_ok=True)
 os.makedirs("outputs/catalogs", exist_ok=True)
+os.makedirs("batch_jobs", exist_ok=True)
+os.makedirs("batch_results", exist_ok=True)
 
 # Mount static files for serving generated content
 app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
 # Include routers
 app.include_router(catalog_router, prefix="/api", tags=["catalog"])
+app.include_router(batch_router, prefix="/api", tags=["batch"])
 
 
 @app.get("/")
