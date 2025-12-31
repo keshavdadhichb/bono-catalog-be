@@ -14,6 +14,7 @@ from enum import Enum
 
 from services.gemini_client import GeminiClient
 from services.image_processor import ImageProcessor
+from services.upscaler import upscale_2k_to_4k
 
 
 router = APIRouter()
@@ -503,7 +504,15 @@ async def generate_master_catalog(
         raise HTTPException(status_code=400, detail="Provide 1-10 products")
     
     num_products = len(front_images)
-    print(f"Enhanced Master Catalog: {num_products} products, theme: {theme}")
+    
+    # COST OPTIMIZATION: Generate at 2K, upscale to 4K if needed
+    # This saves ~50% on generation costs
+    output_quality = image_quality  # What user requested
+    internal_quality = "2K" if image_quality == "4K" else image_quality  # What we generate at
+    should_upscale = (image_quality == "4K")
+    
+    print(f"📊 Catalog: {num_products} products, theme: {theme}")
+    print(f"💰 Cost optimization: Generate at {internal_quality}, output at {output_quality} (upscale: {should_upscale})")
     
     try:
         gemini = GeminiClient()
@@ -527,12 +536,12 @@ async def generate_master_catalog(
             collection_name=collection_name,
             style_number=collection_number,  # Use collection_number from frontend
             theme=theme,
-            image_quality=image_quality
+            image_quality=internal_quality  # Use 2K internally
         )
         generated_images.append(("00_cover.png", cover))
         
         # ========== 2. PRODUCT PAGES (Smart Layout) ==========
-        page_plan = plan_catalog_pages(num_products, max_pages=14)
+        page_plan = plan_catalog_pages(num_products, max_pages=10)
         print(f"Page plan: {len(page_plan)} content pages")
         
         for page_num, (layout_type, prod_idx, extra) in enumerate(page_plan, start=1):
@@ -550,7 +559,7 @@ async def generate_master_catalog(
                         body_type=body_type,
                         theme=theme,
                         page_number=page_number,
-                        image_quality=image_quality
+                        image_quality=internal_quality  # Use 2K internally
                     )
                     generated_images.append((f"{page_num:02d}_collage_product_{prod_idx + 1}.png", page))
                 
@@ -561,7 +570,7 @@ async def generate_master_catalog(
                         garment_image=front_processed[prod_idx],
                         theme=theme,
                         page_number=page_number,
-                        image_quality=image_quality
+                        image_quality=internal_quality  # Use 2K internally
                     )
                     generated_images.append((f"{page_num:02d}_fabric_art_{prod_idx + 1}.png", page))
                 
@@ -580,7 +589,7 @@ async def generate_master_catalog(
                         theme=theme,
                         page_number=page_number,
                         total_pages=len(page_plan),
-                        image_quality=image_quality
+                        image_quality=internal_quality  # Use 2K internally
                     )
                     generated_images.append((f"{page_num:02d}_{view}_product_{prod_idx + 1}.png", page))
                 
@@ -595,7 +604,7 @@ async def generate_master_catalog(
                         body_type=body_type,
                         theme=theme,
                         collection_name=collection_name,
-                        image_quality=image_quality
+                        image_quality=internal_quality  # Use 2K internally
                     )
                     generated_images.append((f"{page_num:02d}_combo_product_{prod_idx + 1}.png", page))
                 
@@ -611,7 +620,7 @@ async def generate_master_catalog(
                         theme=theme,
                         page_number=page_num,
                         total_pages=len(page_plan),
-                        image_quality=image_quality
+                        image_quality=internal_quality  # Use 2K internally
                     )
                     generated_images.append((f"{page_num:02d}_{view}_product_{prod_idx + 1}.png", page))
                     
@@ -628,13 +637,29 @@ async def generate_master_catalog(
             logo_image=logo_data,
             collection_name=collection_name,
             theme=theme,
-            image_quality=image_quality
+            image_quality=internal_quality  # Use 2K internally
         )
         generated_images.append(("99_thankyou.png", thankyou))
         
-        print(f"Generated {len(generated_images)} images, creating ZIP and PDF...")
+        print(f"Generated {len(generated_images)} images")
         
-        # ========== 4. CREATE PDF ==========
+        # ========== 4. UPSCALE TO 4K IF NEEDED ==========
+        if should_upscale:
+            print("📐 Upscaling images from 2K to 4K...")
+            upscaled_images = []
+            for filename, image_bytes in generated_images:
+                try:
+                    upscaled = upscale_2k_to_4k(image_bytes)
+                    upscaled_images.append((filename, upscaled))
+                except Exception as upscale_error:
+                    print(f"⚠️ Upscale failed for {filename}: {upscale_error}")
+                    upscaled_images.append((filename, image_bytes))  # Use original
+            generated_images = upscaled_images
+            print(f"✅ Upscaled {len(generated_images)} images to 4K")
+        
+        print("Creating ZIP and PDF...")
+        
+        # ========== 5. CREATE PDF ==========
         print("Creating PDF from images...")
         try:
             image_bytes_only = [img_bytes for _, img_bytes in generated_images]
