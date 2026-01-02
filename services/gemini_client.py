@@ -1830,6 +1830,10 @@ Generate an elegant, premium catalog cover page."""
                     contents=contents,
                     config=types.GenerateContentConfig(
                         response_modalities=["IMAGE"],
+                        # Enable thinking for cover pages - helps with complex composition
+                        thinking_config=types.ThinkingConfig(
+                            thinking_level="medium"  # Balance quality vs cost
+                        ),
                         image_config=types.ImageConfig(
                             aspect_ratio="9:16",
                             image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
@@ -2286,6 +2290,10 @@ Generate this collage layout now."""
                     contents=contents,
                     config=types.GenerateContentConfig(
                         response_modalities=["IMAGE"],
+                        # Enable thinking for collages - complex 2-image composition
+                        thinking_config=types.ThinkingConfig(
+                            thinking_level="medium"  # Balance quality vs cost
+                        ),
                         image_config=types.ImageConfig(
                             aspect_ratio="9:16",
                             image_size=image_quality if model_to_use == self.PRIMARY_MODEL else None
