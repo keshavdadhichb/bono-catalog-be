@@ -156,6 +156,42 @@ LAYOUT_CONFIGS = {
         "description": "Text as major visual element",
         "text_fields": ["headline", "subtext"],
         "preview": "Large translucent text overlay, energetic modern feel"
+    },
+    "polaroid_pip": {
+        "name": "Polaroid Picture-in-Picture",
+        "description": "Macro background with floating Polaroid inset",
+        "text_fields": ["brand", "headline", "subtext"],
+        "preview": "Full-bleed zoomed back view as textural background. Floating in corner: a smaller 'Polaroid card' with thick white border containing sharp front view. Text strictly inside the white border of inset card. Background remains uncluttered and immersive."
+    },
+    "vertical_diptych": {
+        "name": "50/50 Vertical Diptych",
+        "description": "Clean split-screen for front vs back comparison",
+        "text_fields": ["brand", "headline"],
+        "preview": "Canvas split exactly down middle vertically. Left pane: front view. Right pane: back view. Thin white gutter between. Typography centered bridging both columns or anchored at bottom spanning full width. Equal visual weight, clarity-focused lookbook style."
+    },
+    "hero_sidebar_strip": {
+        "name": "Hero with Sidebar Strip",
+        "description": "75% hero image with thumbnail detail strip",
+        "text_fields": ["headline", "subtext", "tagline"],
+        "preview": "75-80% of canvas: single large hero lifestyle shot (full body). Narrow vertical strip on side: 3-4 stacked square thumbnails showing fabric texture, print detail, cuff closeup. Text in negative space of hero or top of sidebar. Hero sells vibe, strip sells quality."
+    },
+    "scrapbook_stack": {
+        "name": "Offset Scrapbook Stack",
+        "description": "Two overlapping photos like thrown on table",
+        "text_fields": ["headline", "brand"],
+        "preview": "Two medium rectangle photos overlapping diagonally, offset off-center like casually thrown on table. Bottom photo slightly faded/grayscale. Top photo full color with drop shadow for depth. Organic, youthful, street aesthetic. Typography loose, overlapping corners or vertical along edge."
+    },
+    "ghost_double_exposure": {
+        "name": "Ghost Double Exposure",
+        "description": "Artistic seamless blend with no borders",
+        "text_fields": ["headline", "subtext"],
+        "preview": "Background: large desaturated B&W or low-opacity closeup of model face or garment back print. Foreground: sharp full-color cutout of model in different pose (no box/border). Images blend seamlessly. Large bold text sandwiched between layers (behind foreground, in front of background) for 3D depth."
+    },
+    "typographic_gutter": {
+        "name": "Typographic Gutter Split",
+        "description": "Bold text band divides images",
+        "text_fields": ["brand", "headline"],
+        "preview": "Two images separated not by line but by thick bold typography band. Top image and bottom image with large text band in middle (brand name/collection). Or side-by-side with vertical text strip down center. Text IS the frame structure. Very modern high-impact, forces reading as eyes transition between images."
     }
 }
 
@@ -226,6 +262,17 @@ async def generate_and_download(
         front_processed = [processor.prepare_garment(f) for f in front_data]
         back_processed = [processor.prepare_garment(b) for b in back_data]
         
+        
+        # Parse quality - strip _UPSCALE suffix for Gemini
+        # 4K_UPSCALE → generate at "4K", then upscale to 8K later
+        # 2K_UPSCALE → generate at "2K", then upscale to 4K later
+        if image_quality.endswith("_UPSCALE"):
+            internal_quality = image_quality.replace("_UPSCALE", "")
+        else:
+            internal_quality = image_quality
+        
+        print(f"🎨 Quality: {image_quality} (generate: {internal_quality})")
+        
         generated_images = []
         is_poster_mode = generation_mode == "poster"
         
@@ -257,7 +304,7 @@ async def generate_and_download(
                     shot_angle=shot_angle,
                     layout_style=layout_style,
                     text_content=text_content,
-                    image_quality=image_quality
+                    image_quality=internal_quality
                 )
                 
                 generated_images.append((f"product_{product_num}_poster.png", poster))
@@ -273,7 +320,7 @@ async def generate_and_download(
                     shot_angle=shot_angle,
                     pose_type=pose_type,
                     creative_direction=creative_direction,
-                    image_quality=image_quality
+                    image_quality=internal_quality
                 )
                 
                 back_model = await gemini.generate_model_image(
@@ -286,13 +333,41 @@ async def generate_and_download(
                     shot_angle=shot_angle,
                     pose_type=pose_type,
                     creative_direction=creative_direction,
-                    image_quality=image_quality
+                    image_quality=internal_quality
                 )
                 
                 generated_images.append((f"product_{product_num}_front.png", front_model))
                 generated_images.append((f"product_{product_num}_back.png", back_model))
         
-        print(f"Generated {len(generated_images)} images, creating ZIP...")
+        print(f"Generated {len(generated_images)} images")
+        
+        # ========== UPSCALING LOGIC ==========
+        # Parse quality selection for upscaling:
+        # 1K, 2K, 4K = pure generation, no upscale
+        # 2K_UPSCALE = generate at 2K, upscale to 4K
+        # 4K_UPSCALE = generate at 4K, upscale to 8K
+        
+        should_upscale = image_quality.endswith("_UPSCALE")
+        if should_upscale:
+            if image_quality == "2K_UPSCALE":
+                upscale_target = "4K"
+            else:  # 4K_UPSCALE
+                upscale_target = "8K"
+            
+            print(f"📐 Upscaling {len(generated_images)} images to {upscale_target}...")
+            upscaled_images = []
+            for filename, image_bytes in generated_images:
+                try:
+                    upscaled = upscale_to_target(image_bytes, upscale_target)
+                    print(f"  ✅ {filename}: {len(image_bytes)} → {len(upscaled)} bytes")
+                    upscaled_images.append((filename, upscaled))
+                except Exception as upscale_error:
+                    print(f"  ⚠️ Upscale failed for {filename}: {upscale_error}")
+                    upscaled_images.append((filename, image_bytes))  # Use original
+            generated_images = upscaled_images
+            print(f"✅ Upscaling complete")
+        
+        print("Creating ZIP...")
         
         # Create ZIP
         zip_buffer = io.BytesIO()
@@ -716,3 +791,95 @@ async def generate_master_catalog(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Catalog generation failed: {str(e)}")
 
+
+# ============================================
+# POSE VARIATIONS ENDPOINT
+# ============================================
+
+# Available poses for frontend
+POSE_OPTIONS = {
+    "catalog_standard": "Classic Standing",
+    "hands_on_hips": "Hands on Hips", 
+    "arms_crossed": "Arms Crossed",
+    "hands_in_pockets": "Hands in Pockets",
+    "walking": "Walking",
+    "walking_towards": "Walking Towards Camera",
+    "sitting_chair": "Sitting on Chair",
+    "sitting_stool": "Sitting on Stool",
+    "leaning_wall": "Leaning on Wall",
+    "crouching": "Crouching",
+    "editorial_dramatic": "Editorial Dramatic",
+    "editorial_relaxed": "Editorial Relaxed"
+}
+
+
+@router.get("/poses")
+async def get_available_poses():
+    """Get list of available pose options for frontend"""
+    return {"poses": POSE_OPTIONS}
+
+
+@router.post("/regenerate-pose")
+async def regenerate_pose(
+    original_image: UploadFile = File(...),
+    pose_type: str = Form(...),
+    category: str = Form("men"),
+    skin_tone: str = Form("medium"),
+    image_quality: str = Form("4K")
+):
+    """
+    Regenerate an image with a different pose while keeping clothing identical.
+    
+    - original_image: The previously generated image
+    - pose_type: Key from POSE_OPTIONS (e.g., 'hands_on_hips')
+    - category: Model category (men, women, etc.)
+    - skin_tone: Skin tone preference
+    - image_quality: Output quality (1K, 2K, 4K)
+    """
+    
+    if pose_type not in POSE_OPTIONS:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid pose_type. Available: {list(POSE_OPTIONS.keys())}"
+        )
+    
+    try:
+        # Read original image
+        original_bytes = await original_image.read()
+        
+        print(f"🔄 Regenerating with pose: {pose_type}")
+        print(f"   Category: {category}, Quality: {image_quality}")
+        
+        # Create Gemini client
+        client = GeminiClient()
+        
+        # Generate with new pose
+        result_bytes = await client.regenerate_with_pose(
+            original_image_bytes=original_bytes,
+            pose_type=pose_type,
+            category=category,
+            skin_tone=skin_tone,
+            image_quality=image_quality
+        )
+        
+        if not result_bytes:
+            raise HTTPException(status_code=500, detail="Failed to regenerate image with new pose")
+        
+        print(f"✅ Pose regeneration complete: {len(result_bytes)} bytes")
+        
+        # Return as PNG image
+        return StreamingResponse(
+            io.BytesIO(result_bytes),
+            media_type="image/png",
+            headers={
+                "Content-Disposition": f'attachment; filename="pose_{pose_type}.png"'
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Pose regeneration failed: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Pose regeneration failed: {str(e)}")

@@ -1178,6 +1178,186 @@ DYNAMIC TYPOGRAPHY OVERLAY LAYOUT (Modern/Energetic):
 - Feel: Energetic, modern, design-heavy, bold
 
 🚫 GARMENT RULE: The t-shirt/garment must NOT be altered - keep EXACTLY as reference image
+""",
+            "polaroid_pip": f"""
+{typography_base}
+
+POLAROID PICTURE-IN-PICTURE LAYOUT (Macro/Micro Hierarchy):
+- BACKGROUND: Full-bleed ZOOMED-IN shot of garment back or fabric texture
+  * Fill entire canvas with detailed fabric/print texture as immersive backdrop
+  * This is NOT a model shot - zoom into the GARMENT DETAIL to create texture
+  * Slightly desaturated or darker to serve as backdrop
+  
+- FOREGROUND: A "POLAROID CARD" floating in upper-right corner
+  * White thick border (Polaroid/Instax style frame)
+  * Inside the frame: Sharp, full-color model wearing the garment (front view)
+  * Polaroid should be approximately 35-40% of canvas size
+  * Slight rotation (5-8 degrees) for casual feel
+  * Subtle drop shadow to lift it off background
+  
+- TEXT: Strictly INSIDE the white border of the Polaroid card
+  * Brand name and headline in small elegant font within the white bottom border
+  * Background remains completely clean of text
+
+- Feel: Layered, editorial, macro vs micro contrast
+- The Polaroid creates visual hierarchy - detail background, hero inset
+
+🚫 GARMENT RULE: The garment in both background texture AND polaroid must match reference EXACTLY
+""",
+            "vertical_diptych": f"""
+{typography_base}
+
+50/50 VERTICAL DIPTYCH LAYOUT (Split-Screen Comparison):
+- Canvas SPLIT EXACTLY DOWN THE MIDDLE VERTICALLY into two equal panes
+- THIN WHITE GUTTER (2-4px) or hard line separating the two halves
+
+- LEFT PANE (50%): Model wearing garment - FRONT VIEW
+  * Full body, centered in left half
+  * Clean studio background (white or light gray)
+  
+- RIGHT PANE (50%): Model wearing garment - BACK VIEW  
+  * Full body, centered in right half
+  * Same background and lighting as left pane for consistency
+
+- BOTH models should be same person, same pose family (just front/back)
+- Equal visual weight on both sides - this is about COMPARISON
+
+- TYPOGRAPHY: 
+  * Brand name centered at TOP, spanning both columns
+  * Main headline centered at BOTTOM, spanning full width below both images
+  * Clean, simple, lookbook style
+
+- Feel: Clean, informative, lookbook clarity, front-vs-back showcase
+- This is NOT an artistic poster - it's a practical comparison layout
+
+🚫 GARMENT RULE: Garment must be IDENTICAL in both front and back views
+""",
+            "hero_sidebar_strip": f"""
+{typography_base}
+
+HERO WITH SIDEBAR STRIP LAYOUT (75/25 Split):
+- HERO AREA (75-80% of canvas): Single large lifestyle shot
+  * Full-body model shot filling the main area
+  * Dynamic pose, editorial quality
+  * This is the "vibe sell" - aspirational, beautiful
+  
+- SIDEBAR STRIP (20-25% of canvas): Narrow VERTICAL strip on RIGHT side
+  * Contains 3-4 STACKED SQUARE THUMBNAILS
+  * Each thumbnail is a zoomed-in detail shot:
+    - Thumbnail 1: Fabric texture closeup
+    - Thumbnail 2: Print/graphic detail
+    - Thumbnail 3: Collar or neckline detail
+    - Thumbnail 4: Hem or cuff detail
+  * Small gaps between thumbnails
+  * This is the "quality sell" - showing craftsmanship
+  
+- TYPOGRAPHY:
+  * Headline in negative space of Hero (top or bottom)
+  * Subtext below headline
+  * Tagline at top of sidebar strip (rotated 90° optional)
+  
+- Feel: Hero sells emotion, strip sells quality details
+- Magazine editorial with product focus strip
+
+🚫 GARMENT RULE: The garment in hero AND all thumbnails must match reference EXACTLY
+""",
+            "scrapbook_stack": f"""
+{typography_base}
+
+OFFSET SCRAPBOOK STACK LAYOUT (Organic/Street):
+- Background: Light textured surface (off-white, cream, or light gray - like a table or desk)
+
+- TWO RECTANGULAR PHOTOS overlapping casually like thrown on a table:
+  * BOTTOM PHOTO: Slightly FADED or GRAYSCALE/DESATURATED
+    - Rotated approximately -8 to -12 degrees (tilted left)
+    - Shows model back view or detail shot
+    - Pushed back visually (lower contrast, slightly washed out)
+    
+  * TOP PHOTO: Full COLOR with DROP SHADOW
+    - Rotated approximately +5 to +8 degrees (tilted right)  
+    - Shows model front view, sharp and vibrant
+    - Cast shadow on bottom photo to create depth
+    - White polaroid-style border optional
+    
+- Photos should OVERLAP diagonally, offset from center
+
+- TYPOGRAPHY:
+  * Loose, organic placement - NOT rigid
+  * Headline can OVERLAP corners of top photo
+  * Brand text can be VERTICAL along edge of top photo
+  * Handwritten-style or casual fonts work well
+  
+- Feel: Youthful, organic, street/urban aesthetic, casual cool
+- Like someone arranged photos in a scrapbook
+
+🚫 GARMENT RULE: Garment must match reference EXACTLY in both photos
+""",
+            "ghost_double_exposure": f"""
+{typography_base}
+
+GHOST DOUBLE EXPOSURE LAYOUT (Artistic Seamless Blend):
+⚠️ THIS IS AN ARTISTIC DOUBLE-EXPOSURE COMPOSITE - NOT A SIMPLE POSTER
+
+- BACKGROUND LAYER (Ghost/Phantom):
+  * Large, DESATURATED BLACK-AND-WHITE or very LOW OPACITY (20-40%) image
+  * Content: Either CLOSEUP OF MODEL'S FACE or ZOOMED GARMENT BACK PRINT
+  * This layer fills the ENTIRE canvas edge-to-edge
+  * It should feel ethereal, faded, ghostly - like a memory or shadow
+  * NO hard borders or frames around this layer
+  
+- FOREGROUND LAYER (Sharp Cutout):
+  * SHARP, FULL-COLOR cutout of model in DIFFERENT POSE
+  * Full body shot, slightly offset from center
+  * NO box, NO border, NO frame around the model
+  * Model should appear to BLEND and MERGE with the ghost background
+  * Edges can softly dissolve into the background layer
+  
+- The two layers should SEAMLESSLY BLEND - this is DOUBLE EXPOSURE photography
+- Parts of the ghost layer should show THROUGH the darker areas of foreground
+
+- TYPOGRAPHY (Sandwiched for 3D Depth):
+  * LARGE, BOLD headline text placed BETWEEN the two layers
+  * Text appears BEHIND the foreground model but IN FRONT OF the ghost background
+  * This creates a visual "sandwich" with dimensionality:
+    Back: Ghost layer → Middle: TEXT → Front: Color model cutout
+  * Text can be semi-transparent or have blend mode effect
+  * Use dramatic fonts: Bebas Neue, Impact, or bold condensed
+
+- Feel: Artistic, dreamlike, 3D depth, fashion editorial, avant-garde
+- Think: High-fashion magazine double exposure photography
+
+🚫 GARMENT RULE: Garment in foreground model MUST match reference EXACTLY
+""",
+            "typographic_gutter": f"""
+{typography_base}
+
+TYPOGRAPHIC GUTTER SPLIT LAYOUT (Text as Structure):
+- The canvas is DIVIDED by a THICK BAND OF TYPOGRAPHY (not a thin line)
+
+OPTION A - HORIZONTAL GUTTER:
+  * TOP HALF: Image of model (front view or lifestyle)
+  * MIDDLE: THICK HORIZONTAL TEXT BAND (15-20% of canvas height)
+    - Contains BRAND NAME or COLLECTION TITLE in BOLD, LARGE font
+    - Text fills the entire band, becomes the visual divider
+  * BOTTOM HALF: Image of model (back view or different angle)
+
+OPTION B - VERTICAL GUTTER:
+  * LEFT HALF: Image of model
+  * CENTER: VERTICAL TEXT BAND running top to bottom
+    - Brand name written vertically in bold condensed font
+  * RIGHT HALF: Second image of model or detail
+
+- The TEXT ITSELF is the FRAME and STRUCTURE of the page
+- Text should be IMPACTFUL: 100+ pt, bold, condensed fonts
+- Color contrast: If images are dark, text band is light (and vice versa)
+
+- Feel: Very modern, high-impact, forces viewer to read as eyes move between images
+- The typography is NOT decoration - it IS the architecture
+
+- Additional text (subtext, tagline) can appear WITHIN the text band
+- Think: Bold experimental magazine layouts
+
+🚫 GARMENT RULE: Garment in both images MUST match reference EXACTLY
 """
         }
         
@@ -2312,3 +2492,106 @@ Generate this collage layout now."""
                 print("Retrying with fallback...")
         
         raise ValueError("All models failed")
+
+    # ============================================
+    # POSE VARIATION REGENERATION
+    # ============================================
+    
+    async def regenerate_with_pose(
+        self,
+        original_image_bytes: bytes,
+        pose_type: str,
+        category: str = "men",
+        skin_tone: str = "medium",
+        image_quality: str = "4K"
+    ) -> Optional[bytes]:
+        """
+        Regenerate an image with a different pose while keeping clothing identical.
+        
+        Args:
+            original_image_bytes: The previously generated image
+            pose_type: Key from POSE_TYPES
+            category: Model category (men, women, etc.)
+            skin_tone: Skin tone preference
+            image_quality: Output quality (1K, 2K, 4K)
+            
+        Returns:
+            New image bytes with different pose
+        """
+        
+        # Get pose description
+        pose_desc = POSE_TYPES.get(pose_type, POSE_TYPES["catalog_standard"])
+        
+        # Get model and skin descriptions
+        model_info = MODEL_CONFIG.get(category, MODEL_CONFIG["men"])
+        skin_desc = SKIN_TONES.get(skin_tone, SKIN_TONES["medium"])
+        
+        # Quality settings
+        quality_map = {"1K": (1024, 1536), "2K": (2048, 3072), "4K": (4096, 6144)}
+        target_width, target_height = quality_map.get(image_quality, (4096, 6144))
+        
+        prompt = f"""
+REGENERATE THIS IMAGE WITH A NEW POSE.
+
+CRITICAL RULES:
+1. Keep the EXACT SAME clothing/garment - copy every detail pixel-perfect
+2. Keep the EXACT SAME model appearance (face, skin, hair)
+3. ONLY change the pose to: {pose_desc}
+
+MODEL DETAILS:
+- {model_info['description']}, {model_info['age_range']}
+- Skin: {skin_desc}
+
+NEW POSE: {pose_desc}
+
+OUTPUT REQUIREMENTS:
+- Professional fashion photography
+- High-resolution {image_quality} quality ({target_width}x{target_height})
+- Clean studio background
+- Same lighting style as original
+- CLOTHING MUST BE IDENTICAL TO INPUT IMAGE
+"""
+        
+        print(f"🔄 Regenerate pose prompt ({len(prompt)} chars)")
+        
+        # Load original image
+        original_image = Image.open(BytesIO(original_image_bytes))
+        img_byte_arr = BytesIO()
+        original_image.save(img_byte_arr, format='PNG')
+        img_bytes = img_byte_arr.getvalue()
+        
+        model_to_use = self.primary_model
+        
+        for attempt in range(2):
+            try:
+                response = self.client.models.generate_content(
+                    model=model_to_use,
+                    contents=types.Content(
+                        parts=[
+                            types.Part.from_bytes(data=img_bytes, mime_type="image/png"),
+                            types.Part(text=prompt)
+                        ]
+                    ),
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE", "TEXT"],
+                        temperature=0.7,
+                        safety_settings=self._get_safety_settings()
+                    )
+                )
+                
+                result = self._extract_image_from_response(response)
+                
+                if result:
+                    print(f"✅ Pose regeneration successful: {len(result)} bytes")
+                    return result
+                else:
+                    print("⚠️ No image in response, retrying...")
+                    
+            except Exception as e:
+                print(f"Pose regeneration attempt {attempt+1} failed: {e}")
+                if attempt == 1:
+                    raise
+                model_to_use = self.fallback_model
+                print("Retrying with fallback model...")
+        
+        return None

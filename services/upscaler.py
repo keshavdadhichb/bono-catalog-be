@@ -57,11 +57,11 @@ def upscale_image(
         threshold=2
     ))
     
-    # Save as PNG
+    # Save as PNG (no compression for maximum quality)
     output = BytesIO()
-    img_upscaled.save(output, format='PNG', optimize=True)
+    img_upscaled.save(output, format='PNG')  # Removed optimize=True for full quality
     
-    print(f"📐 Upscaled: {original_size} → {img_upscaled.size}")
+    print(f"📐 Upscaled: {original_size} → {img_upscaled.size} ({len(output.getvalue())} bytes)")
     
     return output.getvalue()
 
